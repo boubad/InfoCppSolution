@@ -30,6 +30,7 @@ namespace info {
 			std::future<update_response> create_document_async(const string_t &dbname, const any &doc);
 			std::future<update_response> delete_document_async(const string_t &dbname, 
 				const string_t &sid, const string_t &srev);
+			std::future<string_t> get_document_version_async(const string_t &dbname, const string_t &sid);
 		};// class couchdb_manager
 		//////////////////////////////
 	}// namespace couchdb

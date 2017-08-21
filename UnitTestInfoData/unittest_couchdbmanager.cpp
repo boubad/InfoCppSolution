@@ -136,10 +136,13 @@ namespace UnitTestInfoData
 				Assert::IsFalse(sid.empty());
 				string_t srev = rsp.rev();
 				Assert::IsFalse(srev.empty());
+				//
+				string_t sRev2 = pMan->get_document_version_async(dbname, sid).get();
+				Assert::AreEqual(srev, sRev2);
 				update_response rsp2 = pMan->delete_document_async(dbname, sid, srev).get();
 				b = rsp2.ok();
 				Assert::IsTrue(b);
 			}
-		}//CouchDBManager_CreateDeleteDatabase
+		}//CouchDBManager_CreateDeleteDocumente
 	};
 }

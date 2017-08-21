@@ -233,6 +233,37 @@ namespace info {
 				return (bRet);
 			});
 		}//delete_document_async
+		std::future<string_t> couchdb_manager::get_document_version_async(const string_t &dbname, const string_t &sid) {
+			string_t sx = stringutils::tolower(stringutils::trim(dbname));
+			if (sx.empty() || sid.empty()) {
+				throw info_exception{ U("Invalid parameter(s).") };
+			}
+			std::shared_ptr<string_t> name = std::make_shared<string_t>(sx);
+			std::shared_ptr<string_t> si = std::make_shared<string_t>(sid);
+			return std::async([this, name, si]()->string_t {
+				string_t bRet{};
+				string_t suri{ STRING_SLASH };
+				suri += *name;
+				suri += STRING_SLASH + url_encode(*si);
+				dataserviceuri uri{ suri };
+				info_response_ptr rsp = m_client.head(uri).get();
+				info_response *pRsp = rsp.get();
+				assert(pRsp != nullptr);
+				if (!pRsp->has_error()) {
+					const std::map<string_t, string_t> &oMap = pRsp->headers;
+					string_t key(U("ETag"));
+					auto it = oMap.find(key);
+					if (it != oMap.end()) {
+						string_t s = (*it).second;
+						size_t n = s.length();
+						if (n > 2) {
+							bRet = s.substr(1, n - 2);
+						}
+					}
+				}
+				return (bRet);
+			});
+		}//get_document_version_async
 		////////////////////////////////
 	}// namespace couchdb
 }// namespace info
