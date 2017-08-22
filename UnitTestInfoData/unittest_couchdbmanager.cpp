@@ -26,6 +26,44 @@ namespace UnitTestInfoData
 		std::shared_ptr<http_client> m_httpclient;
 		std::shared_ptr<couchdb_manager> m_man;
 		any m_doc;
+		//
+		static std::vector<couchdb_doc> st_m_docs;
+	public:
+		TEST_CLASS_INITIALIZE(ClassInitialize)
+		{
+			size_t n{ 50 };
+			std::vector<couchdb_doc> &vec = st_m_docs;
+			vec.clear();
+			string_t stype(U("testtype"));
+			for (size_t i = 0; i < n; ++i) {
+				int nRand = std::rand() % 150;
+				infomap oMap{};
+				oMap[U("type")] = any{ stype };
+				{
+					ostringstream_t os{};
+					os << U("sigle") << (i + 1);
+					string_t s = os.str();
+					oMap[U("sigle")] = any{ s };
+				}
+				bool b = ((std::rand() % 3) == 1) ? true : false;
+				oMap[U("bval")] = any{ b };
+				oMap[U("ival")] = any{ nRand };
+				oMap[U("dval")] = any{ 3.14159 * nRand };
+				{
+					ostringstream_t os{};
+					os << U("test val ") << nRand;
+					string_t s = os.str();
+					oMap[U("sval")] = any{ s };
+				}
+				any a{ oMap };
+				couchdb_doc doc{ a };
+				vec.push_back(doc);
+			}// i
+		}//ClassInitialize
+		TEST_CLASS_CLEANUP(ClassCleanup)
+		{
+			st_m_docs.clear();
+		}//ClassCleanup
 	public:
 		TEST_METHOD_INITIALIZE(SetUp)
 		{
@@ -174,5 +212,60 @@ namespace UnitTestInfoData
 				Assert::IsFalse(srev2.empty());
 			}
 		}//CouchDBManager_CreateIndex
+		TEST_METHOD(CouchDBManager_MaintainsDocs)
+		{
+			couchdb_manager *pMan = m_man.get();
+			Assert::IsNotNull(pMan);
+			string_t dbname = m_dbname;
+			bool b = pMan->exists_database_async(dbname).get();
+			if (!b) {
+				b = pMan->create_database_async(dbname).get();
+				Assert::IsTrue(b);
+			}
+			string_t stype(U("testtype"));
+			string_t keysigle(U("sigle"));
+			query_filter filter{};
+			filter.add_equals(U("type"), any{ stype });
+			int nCount = pMan->find_documents_count_async(filter).get();
+			Assert::IsTrue(nCount >= 0);
+			if (nCount < 1) {
+				const std::vector<couchdb_doc> &vec = st_m_docs;
+				int nc = static_cast<int>(vec.size());
+				Assert::IsTrue(nc > 0);
+				std::vector<update_response> rr = pMan->maintains_documents_async(vec).get();
+				nCount = pMan->find_documents_count_async(filter).get();
+				Assert::AreEqual(nc, nCount);
+			}
+			std::vector<couchdb_doc> alldocs{};
+			int pagesize = 10;
+			int offset = 0;
+			filter.set_limit(pagesize);
+			while (offset < nCount) {
+				filter.set_skip(offset);
+				std::vector<couchdb_doc> docs = pMan->find_documents_async(filter).get();
+				int nx = static_cast<int>(docs.size());
+				offset += nx;
+				for (auto p : docs) {
+					ostringstream_t os{};
+					os << p;
+					string_t s = os.str();
+					Logger::WriteMessage(s.c_str());
+					p.is_deleted(true);
+					alldocs.push_back(p);
+				}// p
+				if (nx < pagesize) {
+					break;
+				}
+			}// offsert
+			int nt = static_cast<int>(alldocs.size());
+			std::vector<update_response> rr = pMan->maintains_documents_async(alldocs).get();
+			int nx = static_cast<int>(rr.size());
+			Assert::AreEqual(nt, nx);
+			int nr = pMan->find_documents_count_async(filter).get();
+			Assert::IsTrue(nr == 0);
+		}//CouchDBManager_GetUuids
 	};
+	////////////////////////////
+	std::vector<couchdb_doc> CouchDBManagerTest::st_m_docs;
+	/////////////////////////
 }

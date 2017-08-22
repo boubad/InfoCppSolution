@@ -40,7 +40,7 @@ namespace info {
 		void clear(void);
 	protected:
 		virtual void post_init(void);
-	protected:
+	public:
 		bool has_property(const string_t &key) const;
 		void erase_property(const string_t &key);
 		void set_any_property(const string_t &key, const any &v);
