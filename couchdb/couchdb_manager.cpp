@@ -264,6 +264,49 @@ namespace info {
 				return (bRet);
 			});
 		}//get_document_version_async
+		std::future<index_response> couchdb_manager::create_index_async(const string_t &dbname, const string_t &field,
+			const string_t &ind_name /*= string_t{}*/,
+			const string_t &stype /*= U("json")*/,
+			const string_t &ddoc /*= string_t{}*/) {
+			string_t sx = stringutils::tolower(stringutils::trim(dbname));
+			if (sx.empty() || field.empty()) {
+				throw info_exception{ U("Invalid parameter(s).") };
+			}
+			infovector vx{};
+			vx.push_back( any{field} );
+			infomap xMap{};
+			xMap[U("fields")] = any{ vx };
+			infomap oMap{};
+			oMap[U("index")] = any{ xMap };
+			if (!ind_name.empty()) {
+				oMap[U("name")] = any{ ind_name };
+			}
+			if (!ddoc.empty()) {
+				oMap[U("ddoc")] = any{ ddoc };
+			}
+			if (!stype.empty()) {
+				oMap[U("type")] = any{ stype };
+			}
+			std::shared_ptr<string_t> name = std::make_shared<string_t>(sx);
+			any doc{ oMap };
+			std::shared_ptr<any> pa = std::make_shared<any>(doc);
+			return std::async([this, name, pa]()->index_response {
+				index_response bRet{};
+				string_t suri{ STRING_SLASH };
+				suri += *name;
+				suri += STRING_SLASH + U("_index");
+				dataserviceuri uri{ suri };
+				info_response_ptr rsp = m_client.post(uri, *pa).get();
+				info_response *pRsp = rsp.get();
+				assert(pRsp != nullptr);
+				bRet.status_code(pRsp->statuscode);
+				if (!pRsp->has_error()) {
+					const any &va = pRsp->jsonval;
+					bRet.set(va);
+				}// ok
+				return (bRet);
+			});
+		}//create_index_async
 		////////////////////////////////
 	}// namespace couchdb
 }// namespace info

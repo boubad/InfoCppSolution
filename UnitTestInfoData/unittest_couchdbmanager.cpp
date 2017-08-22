@@ -143,6 +143,27 @@ namespace UnitTestInfoData
 				b = rsp2.ok();
 				Assert::IsTrue(b);
 			}
-		}//CouchDBManager_CreateDeleteDocumente
+		}//CouchDBManager_CreateDeleteDocument
+		TEST_METHOD(CouchDBManager_CreateIndex)
+		{
+			couchdb_manager *pMan = m_man.get();
+			Assert::IsNotNull(pMan);
+			string_t dbname(U("xxtest"));
+			bool b = pMan->exists_database_async(dbname).get();
+			if (!b) {
+				b = pMan->create_database_async(dbname).get();
+				Assert::IsTrue(b);
+			}
+			string_t field(U("ival"));
+			index_response rsp = pMan->create_index_async(dbname, field).get();
+			if (rsp.ok()) {
+				string_t sid = rsp.index_id();
+				Assert::IsFalse(sid.empty());
+				string_t srev = rsp.name();
+				Assert::IsFalse(srev.empty());
+				string_t srev2 = rsp.result();
+				Assert::IsFalse(srev2.empty());
+			}
+		}//CouchDBManager_CreateIndex
 	};
 }

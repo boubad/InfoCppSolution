@@ -4,6 +4,7 @@
 //////////////////////////////
 #include <http_client.h>
 #include "update_response.h"
+#include "index_response.h"
 /////////////////////////////
 namespace info {
 	namespace couchdb {
@@ -31,6 +32,10 @@ namespace info {
 			std::future<update_response> delete_document_async(const string_t &dbname, 
 				const string_t &sid, const string_t &srev);
 			std::future<string_t> get_document_version_async(const string_t &dbname, const string_t &sid);
+			std::future<index_response> create_index_async(const string_t &dbname, const string_t &field,
+				const string_t &ind_name = string_t{},
+				const string_t &stype = U("json"),
+				const string_t &ddoc = string_t{});
 		};// class couchdb_manager
 		//////////////////////////////
 	}// namespace couchdb

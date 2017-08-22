@@ -161,6 +161,7 @@
     <ClInclude Include="attachment_info.h" />
     <ClInclude Include="couchdb_doc.h" />
     <ClInclude Include="couchdb_manager.h" />
+    <ClInclude Include="index_response.h" />
     <ClInclude Include="query_filter.h" />
     <ClInclude Include="server_info.h" />
     <ClInclude Include="update_response.h" />
@@ -169,6 +170,7 @@
     <ClCompile Include="attachment_info.cpp" />
     <ClCompile Include="couchdb_doc.cpp" />
     <ClCompile Include="couchdb_manager.cpp" />
+    <ClCompile Include="index_response.cpp" />
     <ClCompile Include="query_filter.cpp" />
     <ClCompile Include="server_info.cpp" />
     <ClCompile Include="update_response.cpp" />
