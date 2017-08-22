@@ -64,8 +64,6 @@ namespace info {
 #define U(x) _XPLATSTR(x)
 #endif // !_TURN_OFF_PLATFORM_STRING
 	/////////////////////////////////
-	extern std::wstring utf8ToUtf16(const std::string &utf8str);
-	extern std::string utf16ToUtf8(const std::wstring &utf16str);
 	extern string_t string_to_stringt(const std::string &s);
 	extern std::string stringt_to_string(const string_t &s);
 	////////////////////////////////

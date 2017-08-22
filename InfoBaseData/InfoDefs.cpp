@@ -1,9 +1,11 @@
 //InfoDefs.cpp
+////////////////////////////
 #include "InfoDefs.h"
 ///////////////////////
 #include <codecvt>
 /////////////////////
 namespace info {
+#ifdef _MSC_VER
 	////////////////////////////////////////////
 	std::wstring utf8ToUtf16(const std::string& utf8Str)
 	{
@@ -17,21 +19,21 @@ namespace info {
 		return conv.to_bytes(utf16Str);
 	}
 	string_t string_to_stringt(const std::string &s) {
-#ifdef _MSC_VER
 		return utf8ToUtf16(s);
-#else
-		string_t r{ s };
-		return (s);
-#endif
 	}
 	std::string stringt_to_string(const string_t &s) {
-#ifdef _MSC_VER
 		return utf16ToUtf8(s);
+	}
 #else
+	string_t string_to_stringt(const std::string &s) {
 		string_t r{ s };
 		return (s);
-#endif
 	}
+	std::string stringt_to_string(const string_t &s) {
+		string_t r{ s };
+		return (s);
+	}
+#endif // _MSC_VER
 	//////////////////////////////////////////
 	info_exception::info_exception() noexcept {
 
