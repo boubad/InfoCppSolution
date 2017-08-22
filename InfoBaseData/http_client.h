@@ -2,6 +2,7 @@
 #ifndef HTTP_CLIENT_H__
 #define  HTTP_CLIENT_H__
 ///////////////////////////////
+#include "blob_data.h"
 #include "info_response.h"
 #include "info_utils.h"
 ///////////////////////////////

@@ -13,21 +13,16 @@
 #include <fstream>
 //////////////////////////////////
 #if defined(_MSC_VER)
-#include <optional>
 #include <any>
-#define INFO_OPTIONAL_HAS_VALUE(x) ((x).has_value())
 #define INFO_ANY_HAS_VALUE(x) ((x).has_value())
 #else
-#include <boost/optional.hpp>
 #include <boost/any.hpp>
-#define INFO_OPTIONAL_HAS_VALUE(x) ((bool)(x))
 #define INFO_ANY_HAS_VALUE(x) ((!(x).empty()))
 #endif // _MSC_VER
 ////////////////////////////////
 namespace info {
 	//////////////////////
 #if defined(_MSC_VER)
-	using std::optional;
 	using any = std::any;
 #define INFO_ANY_CAST  std::any_cast
 #ifndef _TURN_OFF_PLATFORM_STRING
@@ -46,7 +41,6 @@ namespace info {
 #define ucerr  std::wcerr
 #endif //_TURN_OFF_PLATFORM_STRING
 #else
-	using boost::optional;
 	using any = boost::any;
 #define INFO_ANY_CAST  boost::any_cast
 #ifndef _TURN_OFF_PLATFORM_STRING
@@ -79,7 +73,6 @@ namespace info {
 	using infovector = std::vector<any>;
 	////////////////////////////
 	extern bool info_any_equals(const any &v1, const any &v2);
-	extern string_t any_to_stringt(const any &v);
 	//////////////////////////////
 	class info_exception : public std::exception {
 	private:

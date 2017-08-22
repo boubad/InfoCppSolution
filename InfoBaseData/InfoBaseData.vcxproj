@@ -158,6 +158,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="blob_data.h" />
     <ClInclude Include="http_client.h" />
     <ClInclude Include="infobaseobject.h" />
     <ClInclude Include="InfoDefs.h" />
@@ -166,6 +167,7 @@
     <ClInclude Include="stringutils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="blob_data.cpp" />
     <ClCompile Include="http_client.cpp" />
     <ClCompile Include="infobaseobject.cpp" />
     <ClCompile Include="InfoDefs.cpp" />
