@@ -33,6 +33,12 @@ namespace info {
 		query_filter::~query_filter()
 		{
 		}
+		void query_filter::clear_sort(void) {
+			erase_property(U("sort"));
+		}
+		void query_filter::clear_projection(void) {
+			erase_property(U("fields"));
+		}
 		void query_filter::add_operation(const string_t &field, const string_t &op, any v) {
 			infomap xMap{};
 			xMap[op] = v;

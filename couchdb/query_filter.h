@@ -17,6 +17,10 @@ namespace info {
 			query_filter & operator=(const query_filter &other);
 			virtual ~query_filter();
 		public:
+			//
+			void clear_sort(void);
+			void clear_projection(void);
+			//
 			void set_limit(int n);
 			void set_skip(int n);
 			void add_useindex(const string_t &s);

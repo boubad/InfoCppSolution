@@ -20,6 +20,7 @@ namespace UnitTestInfoData
 	{
 	protected:
 		serverurl m_serverurl;
+		databasename m_dbname;
 		string_t m_username;
 		string_t m_password;
 		std::shared_ptr<http_client> m_httpclient;
@@ -29,10 +30,11 @@ namespace UnitTestInfoData
 		TEST_METHOD_INITIALIZE(SetUp)
 		{
 			m_serverurl = serverurl{ U("http://localhost:5984") };
+			m_dbname = databasename{ U("xxtest") };
 			m_httpclient.reset(new http_manager{ m_serverurl,m_username,m_password });
 			http_client *pClient = m_httpclient.get();
 			Assert::IsNotNull(pClient);
-			m_man.reset(new couchdb_manager{ *pClient });
+			m_man.reset(new couchdb_manager{ *pClient,m_dbname });
 			Assert::IsNotNull(m_man.get());
 			//
 			infomap oMap{};
@@ -107,7 +109,7 @@ namespace UnitTestInfoData
 		{
 			couchdb_manager *pMan = m_man.get();
 			Assert::IsNotNull(pMan);
-			string_t dbname(U("xxtest"));
+			string_t dbname = m_dbname;
 			bool b = pMan->exists_database_async(dbname).get();
 			if (!b) {
 				b = pMan->create_database_async(dbname).get();
@@ -122,24 +124,31 @@ namespace UnitTestInfoData
 		{
 			couchdb_manager *pMan = m_man.get();
 			Assert::IsNotNull(pMan);
-			string_t dbname(U("xxtest"));
+			string_t dbname = m_dbname;
 			bool b = pMan->exists_database_async(dbname).get();
 			if (!b) {
 				b = pMan->create_database_async(dbname).get();
 				Assert::IsTrue(b);
 			}
-			any doc{ m_doc };
+			couchdb_doc doc{ m_doc };
 			//
-			update_response rsp = pMan->create_document_async(dbname, doc).get();
+			update_response rsp = pMan->create_document_async(doc).get();
 			if (rsp.ok()) {
 				string_t sid = rsp.id();
 				Assert::IsFalse(sid.empty());
 				string_t srev = rsp.rev();
 				Assert::IsFalse(srev.empty());
 				//
-				string_t sRev2 = pMan->get_document_version_async(dbname, sid).get();
+				string_t sRev2 = pMan->get_document_version_async(sid).get();
 				Assert::AreEqual(srev, sRev2);
-				update_response rsp2 = pMan->delete_document_async(dbname, sid, srev).get();
+				//
+				couchdb_doc xdoc = pMan->get_document_by_id_async(sid).get();
+				string_t sid2{};
+				bool bx = xdoc.obj_id(sid2);
+				Assert::IsTrue(bx);
+				Assert::AreEqual(sid, sid2);
+				//
+				update_response rsp2 = pMan->delete_document_async(xdoc).get();
 				b = rsp2.ok();
 				Assert::IsTrue(b);
 			}
@@ -148,7 +157,7 @@ namespace UnitTestInfoData
 		{
 			couchdb_manager *pMan = m_man.get();
 			Assert::IsNotNull(pMan);
-			string_t dbname(U("xxtest"));
+			string_t dbname = m_dbname;
 			bool b = pMan->exists_database_async(dbname).get();
 			if (!b) {
 				b = pMan->create_database_async(dbname).get();

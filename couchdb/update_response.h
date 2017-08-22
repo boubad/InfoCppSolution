@@ -21,6 +21,8 @@ namespace info {
 			void status_code(int n);
 			string_t id(void) const;
 			string_t rev(void) const;
+			string_t error(void) const;
+			string_t reason(void) const;
 		};// class update_response
 		///////////////////////////
 	}// namespace couchdb

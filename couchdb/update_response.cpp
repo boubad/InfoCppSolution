@@ -45,6 +45,16 @@ namespace info {
 			get_string_property(U("rev"), bRet);
 			return (bRet);
 		}
+		string_t update_response::error(void) const {
+			string_t bRet{};
+			get_string_property(U("error"), bRet);
+			return (bRet);
+		}
+		string_t update_response::reason(void) const {
+			string_t bRet{};
+			get_string_property(U("reason"), bRet);
+			return (bRet);
+		}
 		///////////////////////////
 	}// namespace couchdb
 }// namespace info
