@@ -22,7 +22,10 @@ namespace info {
 			//
 			http_client  &m_client;
 			string_t	m_dbname;
+            string_t m_version;
 			//
+            bool can_use_mango(void) const;
+            void post_create(void);
 			void check_databasename(void);
 			void check_attachments_url(couchdb_doc &doc);
 		public:
@@ -31,6 +34,7 @@ namespace info {
 			const string_t & database_name(void) const;
 			void database_name(const databasename &name);
 			string_t form_attachment_url(const string_t &docid, const string_t &name);
+            const string_t & version(void) const;
 		public:
 			bool get_server_info(server_info &info);
 			std::future<std::vector<string_t>> get_all_databases_async(void);

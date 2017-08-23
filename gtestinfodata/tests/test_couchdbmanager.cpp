@@ -60,7 +60,7 @@ protected:
         st_m_docs.clear();
     }//TearDownTestCase
     virtual void SetUp() {
-        m_serverurl = serverurl { U("http://192.168.1.10:5984") };
+        m_serverurl = serverurl { U("http://192.168.1.17:5984") };
         m_dbname = databasename { U("xxtest") };
         m_httpclient.reset(new http_manager { m_serverurl,m_username,m_password });
         http_client *pClient = m_httpclient.get();

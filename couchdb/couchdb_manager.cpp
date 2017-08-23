@@ -20,10 +20,29 @@ namespace info {
 				}
 				m_dbname = sx;
 			}
+			post_create();
 		}
 		couchdb_manager::~couchdb_manager()
 		{
 		}
+		 bool couchdb_manager::can_use_mango(void) const{
+             if (!m_version.empty()){
+                 string_t s = m_version.substr(0,1);
+                 istringstream_t in{s};
+                 int n{0};
+                 in >> n;
+                 return (n >= 2);
+            }
+            return (false);
+        }
+		void couchdb_manager::post_create(void){
+            server_info info{};
+            get_server_info(info);
+            m_version = info.version();
+        }
+         const string_t & couchdb_manager::version(void) const{
+             return m_version;
+        }
 		void couchdb_manager::check_databasename(void) {
 			if (m_dbname.empty()) {
 				throw info_exception{ U("Invalid database name.") };
@@ -379,6 +398,9 @@ namespace info {
 			});
 		}//update_document_async
 		std::future<int>  couchdb_manager::find_documents_count_async(const query_filter &filter) {
+            if (!can_use_mango()){
+                throw info_exception(U("Invalid couchdb version"));
+            }
 			std::shared_ptr<query_filter> pf = std::make_shared<query_filter>(filter);
 			return std::async([this, pf]()->int {
 				check_databasename();
@@ -415,6 +437,9 @@ namespace info {
 			});
 		}// find_documents_count_async
 		std::future<std::vector<couchdb_doc>> couchdb_manager::find_documents_async(const query_filter &filter) {
+             if (!can_use_mango()){
+                throw info_exception(U("Invalid couchdb version"));
+            }
 			std::shared_ptr<query_filter> pf = std::make_shared<query_filter>(filter);
 			return std::async([this, pf]()->std::vector<couchdb_doc> {
 				check_databasename();
