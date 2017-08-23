@@ -25,3 +25,5 @@ set (WORK_ALL_LIBS ${CPPREST_LIBS} )
 add_subdirectory(InfoBaseData)
 add_subdirectory(infohttp)
 add_subdirectory(couchdb)
+add_subdirectory(gtestinfodata)
+
