@@ -39,6 +39,18 @@ namespace info {
 			}
 			m_dbname = sx;
 		}
+		string_t couchdb_manager::form_attachment_url(const string_t &docid, const string_t &name) {
+			string_t sx = (const string_t &)m_client.get_serverurl();
+			string_t s0 = sx + STRING_SLASH;
+			s0 += this->m_dbname + STRING_SLASH + url_encode(docid) + STRING_SLASH + url_encode(name);
+			return (s0);
+		}//form_attachment_url
+		void couchdb_manager::check_attachments_url(couchdb_doc &doc) {
+			string_t docid = doc.id();
+			string_t sx = (const string_t &)m_client.get_serverurl();
+			string_t sbase = sx + STRING_SLASH + this->m_dbname;
+			doc.update_attachments_urls(sbase);
+		}//check_attachments_url
 		bool couchdb_manager::get_server_info(server_info &info) {
 			info.clear();
 			bool bRet{ false };
@@ -330,20 +342,23 @@ namespace info {
 				info_response *pRsp = rsp.get();
 				assert(pRsp != nullptr);
 				if (!pRsp->has_error()) {
-					bRet.set(pRsp->jsonval);
+					any va = pRsp->jsonval;
+					bRet.set(va);
+					this->check_attachments_url(bRet);
 				}
 				return (bRet);
 			});
 		}//get_document_by_id_as
-		std::future<update_response> couchdb_manager::update_document_async(const couchdb_doc &doc) {
+		std::future<update_response> couchdb_manager::update_document_async(couchdb_doc &doc) {
 			std::shared_ptr<couchdb_doc> pa = std::make_shared<couchdb_doc>(doc);
 			return std::async([this, pa]()->update_response {
 				check_databasename();
 				string_t sid{}, srev{};
 				couchdb_doc *pDoc = pa.get();
-				if ((!pDoc->obj_id(sid)) || (!pDoc->obj_version(srev))) {
+				if (!pDoc->is_persisted()) {
 					throw info_exception{ U("Invalid document.") };
 				}
+				pDoc->clean_attachments();
 				update_response bRet{};
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
@@ -463,6 +478,77 @@ namespace info {
 				return (bRet);
 			});
 		}//maintains_documents_async
+		///////////////////////////////////
+		std::future<std::shared_ptr<blob_data>> couchdb_manager::read_document_attachment_async(const couchdb_doc &doc,
+			const string_t &name) {
+			std::shared_ptr<couchdb_doc> pf = std::make_shared<couchdb_doc>(doc);
+			std::shared_ptr<string_t> xname = std::make_shared<string_t>(name);
+			return std::async([this, pf, xname]()->std::shared_ptr<blob_data> {
+				if (!pf->is_persisted()) {
+					throw info_exception{ U("Invalid document.") };
+				}
+				string_t suri{ STRING_SLASH };
+				suri += this->m_dbname;
+				suri += STRING_SLASH + url_encode(pf->id()) + STRING_SLASH + url_encode(*xname);
+				dataserviceuri uri{ suri };
+				std::shared_ptr<blob_data> oRet = m_client.read_blob(uri).get();
+				return (oRet);
+			});
+		}
+		std::future<update_response> couchdb_manager::update_document_attachment_async(const couchdb_doc &doc,
+			const blob_data &blob) {
+			std::shared_ptr<couchdb_doc> pf = std::make_shared<couchdb_doc>(doc);
+			std::shared_ptr<blob_data> pv = std::make_shared<blob_data>(blob);
+			return std::async([this, pf, pv]()->update_response {
+				if (!pf->is_persisted()) {
+					throw info_exception{ U("Invalid document.") };
+				}
+				string_t suri{ STRING_SLASH };
+				suri += this->m_dbname;
+				suri += STRING_SLASH + url_encode(pf->id()) + STRING_SLASH + url_encode(pv->name());
+				dataserviceuri uri{ suri };
+				query_params query{};
+				string_t srev = pf->version();
+				query.push_back(std::make_pair(U("rev"), srev));
+				info_response_ptr rsp = m_client.maintains_blob(uri, *pv, query).get();
+				info_response *pRsp = rsp.get();
+				assert(pRsp != nullptr);
+				update_response r{};
+				r.status_code(pRsp->statuscode);
+				if (!pRsp->has_error()) {
+					const any &va = pRsp->jsonval;
+					r.set(va);
+				}// ok
+				return (r);
+			});
+		}
+		std::future<update_response> couchdb_manager::delete_document_attachment_async(const couchdb_doc &doc,
+			const string_t &name) {
+			std::shared_ptr<couchdb_doc> pf = std::make_shared<couchdb_doc>(doc);
+			std::shared_ptr<string_t> xname = std::make_shared<string_t>(name);
+			return std::async([this, pf, xname]()->update_response {
+				if (!pf->is_persisted()) {
+					throw info_exception{ U("Invalid document.") };
+				}
+				string_t suri{ STRING_SLASH };
+				suri += this->m_dbname;
+				suri += STRING_SLASH + url_encode(pf->id()) + STRING_SLASH + url_encode(*xname);
+				dataserviceuri uri{ suri };
+				query_params query{};
+				string_t srev = pf->version();
+				query.push_back(std::make_pair(U("rev"), srev));
+				info_response_ptr rsp = m_client.del(uri, query).get();
+				info_response *pRsp = rsp.get();
+				assert(pRsp != nullptr);
+				update_response r{};
+				r.status_code(pRsp->statuscode);
+				if (!pRsp->has_error()) {
+					const any &va = pRsp->jsonval;
+					r.set(va);
+				}// ok
+				return (r);
+			});
+		}
 		////////////////////////////////
 	}// namespace couchdb
 }// namespace info

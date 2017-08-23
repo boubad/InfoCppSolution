@@ -22,6 +22,7 @@ namespace info {
 				const password &pass = password{});
 			virtual ~http_manager();
 		public:
+			virtual serverurl get_serverurl(void) override;
 			virtual std::future<info_response_ptr> head(const dataserviceuri &suri,
 				const query_params &query = query_params{},
 				const query_params &headers = query_params{}) override;
@@ -42,6 +43,15 @@ namespace info {
 				const query_params &headers = query_params{}) override;
 			virtual std::future<info_response_ptr> del(const dataserviceuri &suri,
 				const query_params &query = query_params{},
+				const query_params &headers = query_params{}) override;
+			//
+			virtual std::future<info_response_ptr> maintains_blob(const dataserviceuri &suri,
+				const blob_data &blob,
+				const query_params &query = query_params{},
+				const query_params &headers = query_params{},
+				const string_t &method = U("put")) override;
+			virtual std::future<std::shared_ptr<blob_data>> read_blob(const dataserviceuri &suri,
+				const query_params &params = query_params{},
 				const query_params &headers = query_params{}) override;
 		};// class http_manager
 		///////////////////////////

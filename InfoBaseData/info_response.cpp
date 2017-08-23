@@ -8,7 +8,8 @@ namespace info {
 	}
 	info_response::info_response(const info_response &other) : contentlength(other.contentlength),
 		statuscode(other.statuscode), headers(other.headers), stringval(other.stringval),
-		jsonval(other.jsonval), byteval(other.byteval), errorstring(other.errorstring), reason(other.reason) {
+		jsonval(other.jsonval), byteval(other.byteval), errorstring(other.errorstring), reason(other.reason),
+		mime_type(other.mime_type){
 
 	}
 	info_response & info_response::operator=(const info_response &other) {
@@ -21,6 +22,7 @@ namespace info {
 			this->byteval = other.byteval;
 			this->errorstring = other.errorstring;
 			this->reason = other.reason;
+			this->mime_type = other.mime_type;
 		}
 		return (*this);
 	}

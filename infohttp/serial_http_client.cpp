@@ -62,7 +62,21 @@ namespace info {
 			assert(o.get() != nullptr);
 			oRet = *o;
 		}
-		////////////////////////////
+		void serial_infohttpclient::maintains_blob(const dataserviceuri &suri,
+			const blob_data &blob,
+			info_http_response &oRet,
+			const query_params &query /*= query_params{}*/,
+			const query_params &headers /*= query_params{}*/,
+			const string_t &method /*= U("put")*/) {
+			info_http_response_ptr o = infohttpclient::maintains_blob(suri, blob, query, headers, method).get();
+			assert(o.get() != nullptr);
+			oRet = *o;
+		}
+		std::shared_ptr<blob_data> serial_infohttpclient::read_blob(const dataserviceuri &suri,
+			const query_params &params /*= query_params{}*/,
+			const query_params &headers /*= query_params{}*/) {
+			return infohttpclient::read_blob(suri, params, headers).get();
+		}
 		/////////////////////
 	}// namespace http
 }// namespace info

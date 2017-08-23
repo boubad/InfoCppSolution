@@ -2,8 +2,8 @@
 #ifndef HTTP_CLIENT_H__
 #define  HTTP_CLIENT_H__
 ///////////////////////////////
-#include "blob_data.h"
 #include "info_response.h"
+#include "blob_data.h"
 #include "info_utils.h"
 ///////////////////////////////
 namespace info {
@@ -15,6 +15,7 @@ namespace info {
 	public:
 		virtual ~http_client();
 	public:
+		virtual serverurl get_serverurl(void) = 0;
 		virtual std::future<info_response_ptr> head(const dataserviceuri &suri,
 			const query_params &query = query_params{},
 			const query_params &headers = query_params{}) = 0;
@@ -35,6 +36,15 @@ namespace info {
 			const query_params &headers = query_params{}) = 0;
 		virtual std::future<info_response_ptr> del(const dataserviceuri &suri,
 			const query_params &query = query_params{},
+			const query_params &headers = query_params{}) = 0;
+		//
+		virtual std::future<info_response_ptr> maintains_blob(const dataserviceuri &suri,
+			const blob_data &blob,
+			const query_params &query = query_params{},
+			const query_params &headers = query_params{},
+			const string_t &method = U("put")) = 0;
+		virtual std::future<std::shared_ptr<blob_data>> read_blob(const dataserviceuri &suri,
+			const query_params &params = query_params{},
 			const query_params &headers = query_params{}) = 0;
 	}; // class http_client
 }// namespace info

@@ -24,11 +24,13 @@ namespace info {
 			string_t	m_dbname;
 			//
 			void check_databasename(void);
+			void check_attachments_url(couchdb_doc &doc);
 		public:
 			couchdb_manager(http_client &client, const databasename &name = databasename{});
 			virtual ~couchdb_manager();
 			const string_t & database_name(void) const;
 			void database_name(const databasename &name);
+			string_t form_attachment_url(const string_t &docid, const string_t &name);
 		public:
 			bool get_server_info(server_info &info);
 			std::future<std::vector<string_t>> get_all_databases_async(void);
@@ -44,10 +46,13 @@ namespace info {
 				const string_t &stype = U("json"),
 				const string_t &ddoc = string_t{});
 			std::future<couchdb_doc> get_document_by_id_async(const string_t &docid, bool bAttach = true);
-			std::future<update_response> update_document_async(const couchdb_doc &doc);
+			std::future<update_response> update_document_async(couchdb_doc &doc);
 			std::future<int> find_documents_count_async(const query_filter &filter);
 			std::future<std::vector<couchdb_doc>> find_documents_async(const query_filter &filter);
 			std::future<std::vector<update_response>> maintains_documents_async(const std::vector<couchdb_doc> &vec);
+			std::future<std::shared_ptr<blob_data>> read_document_attachment_async(const couchdb_doc &doc, const string_t &name);
+			std::future<update_response> update_document_attachment_async(const couchdb_doc &doc, const blob_data &blob);
+			std::future<update_response> delete_document_attachment_async(const couchdb_doc &doc, const string_t &name);
 		};// class couchdb_manager
 		//////////////////////////////
 	}// namespace couchdb

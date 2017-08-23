@@ -13,6 +13,7 @@ namespace info {
 		string_t m_id;
 		string_t m_name;
 		string_t m_mime;
+		string_t m_url;
 		std::vector<byte> m_data;
 	public:
 		blob_data();
@@ -22,6 +23,9 @@ namespace info {
 		blob_data & operator=(const blob_data &other);
 		~blob_data();
 	public:
+		bool ok(void) const {
+			return (!m_mime.empty()) && (m_data.size() > 0);
+		}// ok
 		const string_t &id(void) const {
 			return m_id;
 		}
@@ -39,6 +43,12 @@ namespace info {
 		}
 		void mime_type(const string_t &s) {
 			m_mime = s;
+		}
+		const string_t &url(void) const {
+			return m_url;
+		}
+		void url(const string_t &s) {
+			m_url = s;
 		}
 		const std::vector<byte> &data(void) const {
 			return m_data;

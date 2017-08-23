@@ -4,6 +4,7 @@
 //////////////////////////////
 #include "info_http_utils.h"
 ///////////////////////////
+#include <blob_data.h>
 #include <info_utils.h>
 ////////////////////////////////
 namespace info {
@@ -18,6 +19,7 @@ namespace info {
 			//
 			string_t form_url(const string_t &baseUri, const query_params &params = query_params{});
 		private:
+			serverurl m_url;
 			std::shared_ptr<web::credentials> m_credentials;
 			std::shared_ptr<web::http::client::http_client_config> m_config;
 			std::shared_ptr<web::http::client::http_client> m_client;
@@ -27,6 +29,9 @@ namespace info {
 				const password &pass = password{});
 			virtual ~infohttpclient();
 		public:
+			serverurl get_serverurl(void) {
+				return m_url;
+			}
 			task<info_http_response_ptr> head(const dataserviceuri &suri,
 				const query_params &params = query_params{},
 				const query_params &headers = query_params{});
@@ -48,6 +53,15 @@ namespace info {
 				const query_params &headers =
 				query_params{});
 			task<info_http_response_ptr> del(const dataserviceuri &suri,
+				const query_params &params = query_params{},
+				const query_params &headers = query_params{});
+			//
+			task<info_http_response_ptr> maintains_blob(const dataserviceuri &suri,
+				const blob_data &blob,
+				const query_params &query = query_params{},
+				const query_params &headers = query_params{},
+				const string_t &method = U("put"));
+			task<std::shared_ptr<blob_data>> read_blob(const dataserviceuri &suri,
 				const query_params &params = query_params{},
 				const query_params &headers = query_params{});
 		};

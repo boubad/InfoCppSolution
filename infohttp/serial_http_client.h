@@ -38,6 +38,15 @@ namespace info {
 			void del(const dataserviceuri &suri, info_http_response &oRet,
 				const query_params &params = query_params{},
 				const query_params &headers = query_params{});
+			void maintains_blob(const dataserviceuri &suri,
+				const blob_data &blob,
+				info_http_response &oRet,
+				const query_params &query = query_params{},
+				const query_params &headers = query_params{},
+				const string_t &method = U("put"));
+			std::shared_ptr<blob_data> read_blob(const dataserviceuri &suri,
+				const query_params &params = query_params{},
+				const query_params &headers = query_params{});
 		};
 		// class infohttpclient
 		////////////////////////////////

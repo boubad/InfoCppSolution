@@ -20,6 +20,7 @@ namespace info {
 		byte_vector byteval;
 		string_t errorstring;
 		string_t reason;
+		string_t mime_type;
 	public:
 		info_response();
 		info_response(const info_response &other);

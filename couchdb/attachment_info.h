@@ -10,6 +10,9 @@ namespace info {
 		class attachment_info : public infobaseobject
 		{
 		public:
+			static const string_t KEY_NAME;
+			static const string_t KEY_URL;
+		public:
 			attachment_info();
 			attachment_info(const any &va);
 			attachment_info(const attachment_info &other);
@@ -18,6 +21,8 @@ namespace info {
 		public:
 			string_t name(void) const;
 			void name(const string_t &s);
+			string_t url(void) const;
+			void url(const string_t &s);
 			string_t content_type(void) const;
 			string_t data(void) const;
 			string_t digest(void) const;

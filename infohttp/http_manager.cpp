@@ -32,6 +32,9 @@ namespace info {
 		http_manager::~http_manager()
 		{
 		}
+		serverurl http_manager::get_serverurl(void) {
+			return m_client->get_serverurl();
+		}
 		std::future<info_response_ptr> http_manager::head(const dataserviceuri &suri,
 			const query_params &query /*= query_params{}*/,
 			const query_params &headers /*= query_params{}*/) {
@@ -137,6 +140,34 @@ namespace info {
 				this->m_client->del(*xuri, rsp, *xquery, *xheaders);
 				convert_rsp(rsp, *oRet);
 				return (oRet);
+			});
+		}
+		std::future<info_response_ptr> http_manager::maintains_blob(const dataserviceuri &suri,
+			const blob_data &blob,
+			const query_params &query /* = query_params{}*/,
+			const query_params &headers /*= query_params{}*/,
+			const string_t &method /*= U("put")*/) {
+			std::shared_ptr<dataserviceuri> xuri = std::make_shared<dataserviceuri>(suri);
+			std::shared_ptr<blob_data> pv = std::make_shared<blob_data>(blob);
+			std::shared_ptr<query_params> xquery = std::make_shared<query_params>(query);
+			std::shared_ptr<query_params> xheaders = std::make_shared<query_params>(headers);
+			std::shared_ptr<string_t> sm = std::make_shared<string_t>(method);
+			return std::async([this, xuri, pv, xquery, xheaders,sm]()->info_response_ptr {
+				info_response_ptr oRet = std::make_shared<info_response>();
+				info_http_response rsp{};
+				this->m_client->maintains_blob(*xuri, *pv, rsp, *xquery, *xheaders, *sm);
+				convert_rsp(rsp, *oRet);
+				return (oRet);
+			});
+		}
+		std::future<std::shared_ptr<blob_data>> http_manager::read_blob(const dataserviceuri &suri,
+			const query_params &params /*= query_params{}*/,
+			const query_params &headers /*= query_params{}*/) {
+			std::shared_ptr<dataserviceuri> xuri = std::make_shared<dataserviceuri>(suri);
+			std::shared_ptr<query_params> xquery = std::make_shared<query_params>(params);
+			std::shared_ptr<query_params> xheaders = std::make_shared<query_params>(headers);
+			return std::async([this, xuri,xquery, xheaders]()->std::shared_ptr<blob_data> {
+				return this->m_client->read_blob(*xuri, *xquery, *xheaders);
 			});
 		}
 		//////////////////////////////////

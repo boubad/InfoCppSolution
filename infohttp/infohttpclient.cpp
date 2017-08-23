@@ -1,5 +1,6 @@
 #include "infohttpclient.h"
 #include "http_utils.h"
+#include <stringutils.h>
 ////////////////////////////
 namespace info {
 	namespace http {
@@ -28,7 +29,13 @@ namespace info {
 		static const char_t CHAR_SLASH(U('/'));
 		 ////////////////////////////////////////////////
 		infohttpclient::infohttpclient(const serverurl &sUrl, const username &user, const password &pass) {
-			assert(!sUrl.empty());
+			string_t s0 = sUrl;
+			string_t sx = stringutils::trim(s0);
+			assert(!sx.empty());
+			size_t n = sx.length();
+			if (sx[n - 1] == CHAR_SLASH) {
+				sx = sx.substr(0, n - 1);
+			}
 			if ((!user.empty()) && (!pass.empty())) {
 				m_credentials.reset(new credentials{ user,pass });
 				credentials *pCred = m_credentials.get();
@@ -37,7 +44,8 @@ namespace info {
 				http_client_config *pConfig = m_config.get();
 				assert(pConfig != nullptr);
 				pConfig->set_credentials(*pCred);
-				m_client.reset(new http_client{ (const string_t &)sUrl,*pConfig });
+				m_client.reset(new http_client{ sx,*pConfig });
+				m_url = sx;
 			}
 			else {
 				m_client.reset(new http_client{ (const string_t &)sUrl });
@@ -358,6 +366,114 @@ namespace info {
 				}).get();
 			}};
 		}// del
+		/////////////////////////////////
+		task<info_http_response_ptr> infohttpclient::maintains_blob(const dataserviceuri &suri,
+			const blob_data &blob,
+			const query_params &query /*= query_params{}*/,
+			const query_params &headers /*= query_params{}*/,
+			const string_t &method /*= U("put")*/) {
+			std::shared_ptr<string_t> ps = std::make_shared<string_t>(form_url(suri, query));
+			assert(ps.get() != nullptr);
+			std::shared_ptr<blob_data> pv = std::make_shared<blob_data>(blob);
+			assert(pv.get() != nullptr);
+			std::shared_ptr<string_t> sm = std::make_shared<string_t>(method);
+			assert(sm.get() != nullptr);
+			std::shared_ptr<query_params> ph = std::make_shared<query_params>(headers);
+			assert(ph.get() != nullptr);
+			return task<info_http_response_ptr>{[this, ps, pv,sm, ph]()->info_http_response_ptr {
+				std::shared_ptr<http_request> req{};
+				if (*sm == U("put")) {
+					req.reset(new http_request{ methods::PUT });
+				}
+				else {
+					req.reset(new http_request{ methods::POST });
+				}
+				req->headers().add(ACCEPT_STRING, ACCEPTS_ALL_STRING);
+				for (auto it = ph->begin(); it != ph->end(); ++it) {
+					req->headers().add((*it).first, (*it).second);
+				}//it
+				req->set_request_uri(*ps);
+				req->set_body(pv->data());
+				req->headers().add(HEADER_CONTENT_TYPE, pv->mime_type());
+				info_http_response_ptr rsp = std::make_shared<info_http_response>();
+				assert(rsp.get() != nullptr);
+				return this->m_client->request(*req).then([rsp](http_response response) {
+					info_http_response *p = rsp.get();
+					assert(p != nullptr);
+					status_code code = response.status_code();
+					p->statuscode = code;
+					p->headers = response.headers();
+					string_t stype = response.headers().content_type();
+					if (stype == APPLICATION_JSON) {
+						return response.extract_json();
+					}
+					else {
+						value v{};
+						return task_from_result(v);
+					}
+				}).then([rsp](task<value> previousTask) {
+					info_http_response *p = rsp.get();
+					assert(p != nullptr);
+					try {
+						value val = previousTask.get();
+						p->jsonval = val;
+					}
+					catch (std::exception & ex) {
+						std::string s = ex.what();
+						p->errorstring = utility::conversions::to_string_t(s);
+					}
+					return (rsp);
+				}).get();
+			}};
+		}//maintains_blob
+		task<std::shared_ptr<blob_data>> infohttpclient::read_blob(const dataserviceuri &suri,
+			const query_params &params /*= query_params{}*/,
+			const query_params &headers /*= query_params{}*/) {
+			std::shared_ptr<string_t> ps = std::make_shared<string_t>(form_url(suri, params));
+			assert(ps.get() != nullptr);
+			std::shared_ptr<query_params> ph = std::make_shared<query_params>(headers);
+			return task<std::shared_ptr<blob_data>>{[this, ps, ph]()->std::shared_ptr<blob_data> {
+				http_request request(methods::GET);
+				request.headers().add(ACCEPT_STRING, ACCEPTS_ALL_STRING);
+				for (auto it = ph->begin(); it != ph->end(); ++it) {
+					request.headers().add((*it).first, (*it).second);
+				}//it
+				request.set_request_uri(*ps);
+				std::shared_ptr<blob_data> oRet{ new blob_data{} };
+				blob_data *px = oRet.get();
+				assert(px != nullptr);
+				px->url(*ps);
+				return this->m_client->request(request).then([oRet](http_response response) {
+					std::vector<unsigned char >  vec{};
+					blob_data *p = oRet.get();
+					assert(p != nullptr);
+					int code = static_cast<int>(response.status_code());
+					if (code < 400) {
+						auto headers = response.headers();
+						if (headers.has(HEADER_CONTENT_TYPE)) {
+							string_t sx = headers[HEADER_CONTENT_TYPE];
+							p->mime_type(sx);
+						}
+						return response.extract_vector();
+					}
+					else if (code < 500) {
+						return task_from_result(vec);
+					}
+					else {
+						throw http_exception(code);
+					}
+				}).then([oRet](task<std::vector<unsigned char > > previousTask) {
+					try {
+						blob_data *p = oRet.get();
+						std::vector<unsigned char> vec = previousTask.get();
+						p->data(vec);
+					}
+					catch (std::exception & /*ex*/) {
+					}
+					return (oRet);
+				}).get();
+			}};
+		}//read_blob
 		////////////////////////////
 	}// namespace http
 }// namespace info
