@@ -457,6 +457,7 @@ namespace info {
 				infovector vx{};
 				for (auto it = pf->begin(); it != pf->end(); ++it) {
 					couchdb_doc &doc = (*it);
+					doc.clean_attachments();
 					vx.push_back(doc.get());
 				}
 				infomap oMap{};
