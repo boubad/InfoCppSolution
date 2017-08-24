@@ -1,16 +1,87 @@
 #include "blob_data.h"
+#include "stringutils.h"
 /////////////////////////////
 namespace info {
+	///////////////////////////////
+#ifdef _MSC_VER
+	static const string_t STRING_FILEDELIM(U("\\"));
+#else
+	static const string_t STRING_FILEDELIM(U("/"));
+#endif
 	///////////////////////////
 	blob_data::blob_data():m_size(0)
 	{
 	}
+	blob_data::blob_data(const string_t &filename):m_size(0) {
+		try {
+			std::string sfile = stringt_to_string(filename);
+			std::ifstream file{ sfile,std::ios::in | std::ios::binary | std::ios::ate};
+			if (file.is_open()) {
+				size_t n = static_cast<size_t>(file.tellg());
+				if (n > 0) {
+					std::shared_ptr<byte> xdata{ new byte[n] };
+					char *p = (char *)xdata.get();
+					if (p != nullptr) {
+						file.seekg(0, std::ios::beg);
+						file.read(p, n);
+						file.close();
+						m_data = xdata;
+						m_size = n;
+						string_t s = stringutils::tolower(filename);
+						size_t nl = s.length();
+						size_t pos = s.find_last_of(U("."));
+						string_t sext{}, sname{};
+						if (pos != string_t::npos) {
+							sext = s.substr(pos + 1, nl - pos - 1);
+							size_t xpos = s.find_last_of(STRING_FILEDELIM);
+							if (xpos != string_t::npos) {
+								sname = s.substr(xpos + 1, pos - xpos - 1);
+							}
+							else {
+								sname = s.substr(0, pos);
+							}
+						}
+						m_name = sname;
+						if ((sext == U("jpg")) || (sext == U("jpeg"))) {
+							 mime_type(U("image/jpg"));
+						}
+						else if (sext == U("png")) {
+							mime_type(U("image/png"));
+						}
+						else if (sext == U("json")) {
+						mime_type(U("application/json"));
+						}
+						else if (sext == U("txt")) {
+							mime_type(U("text/plain"));
+						}
+						else if (sext == U("html")) {
+							mime_type(U("text/html"));
+						}
+						else {
+							mime_type(U("application/octet-stream"));
+						}
+					}// p
+				}// n
+			}// file
+		}catch(std::exception & /*ex*/){}
+	}
+	void blob_data::mime_type(const string_t &s) {
+		string_t delim(U(","));
+		stringutils::split_vector(s, m_mimes, delim, false);
+
+	}// mime_type
+	blob_data::blob_data(size_t n):m_size(0) {
+		if (n > 0) {
+			m_data.reset(new byte[n]);
+		}
+	}
 	blob_data::blob_data(const string_t &sname, const string_t &smime, const std::vector<byte> &d,
-		const string_t &sid /*= string_t{}*/):m_size(0),m_id(sid),m_name(sname),m_mime(smime) {
+		const string_t &sid /*= string_t{}*/):m_size(0),m_id(sid),m_name(sname) {
+		mime_type(smime);
 		data(d);
 	}
 	blob_data::blob_data(const blob_data &other):m_size(other.m_size),m_id(other.m_id),m_rev(other.m_rev),m_name(other.m_name),
-	m_mime(other.m_mime),m_data(other.m_data){
+	m_data(other.m_data),m_mimes(other.m_mimes){
 
 	}
 	blob_data & blob_data::operator=(const blob_data &other) {
@@ -19,8 +90,8 @@ namespace info {
 			m_id = other.m_id;
 			m_rev = other.m_rev;
 			m_name = other.m_name;
-			m_mime = other.m_mime;
 			m_data = other.m_data;
+			m_mimes = other.m_mimes;
 		}
 		return (*this);
 	}

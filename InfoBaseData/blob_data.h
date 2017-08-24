@@ -14,11 +14,13 @@ namespace info {
 		string_t m_id;
 		string_t m_rev;
 		string_t m_name;
-		string_t m_mime;
 		string_t m_url;
 		std::shared_ptr<byte> m_data;
+		std::vector<string_t> m_mimes;
 	public:
 		blob_data();
+		blob_data(const string_t &filename);
+		blob_data(size_t n);
 		blob_data(const string_t &sname, const string_t &smime, const std::vector<byte> &d,
 			const string_t &sid = string_t{});
 		blob_data(const blob_data &other);
@@ -27,12 +29,16 @@ namespace info {
 		operator bool(void) const { return ok(); }
 	public:
 		bool ok(void) const {
-			return (!m_name.empty()) && (!m_mime.empty()) && (m_size > 0) && (m_data.get() != nullptr);
+			return (!m_name.empty()) && (!m_mimes.empty()) && (m_size > 0) && (m_data.get() != nullptr);
 		}// ok
 		size_t size(void) const {
 			return m_size;
 		}
 		const byte *data(size_t & nLength) const {
+			nLength = m_size;
+			return (m_data.get());
+		}
+		byte *data(size_t & nLength)  {
 			nLength = m_size;
 			return (m_data.get());
 		}
@@ -54,12 +60,10 @@ namespace info {
 		void name(const string_t &s) {
 			m_name = s;
 		}
-		const string_t &mime_type(void) const {
-			return m_mime;
+		string_t mime_type(void) const {
+			return (m_mimes.empty()) ? string_t{} : m_mimes[0];
 		}
-		void mime_type(const string_t &s) {
-			m_mime = s;
-		}
+		void mime_type(const string_t &s);
 		const string_t &url(void) const {
 			return m_url;
 		}

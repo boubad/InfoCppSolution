@@ -613,6 +613,7 @@ namespace info {
 				if (oRet.get() != nullptr) {
 					oRet->id(docid);
 					oRet->version(srev);
+					oRet->name(*xname);
 				}
 				return (oRet);
 			});

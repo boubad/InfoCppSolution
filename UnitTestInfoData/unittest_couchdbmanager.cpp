@@ -76,7 +76,9 @@ namespace UnitTestInfoData
 			Assert::IsNotNull(m_man.get());
 			//
 			infomap oMap{};
+			string_t sid(U("testid"));
 			string_t textval(U("string testvalue"));
+			oMap[U("_id")] = any{ sid };
 			oMap[U("bval")] = any{ true };
 			oMap[U("ival")] = any{ (int)1234 };
 			oMap[U("dval")] = any{ 3.14159 };
@@ -168,36 +170,34 @@ namespace UnitTestInfoData
 				b = pMan->create_database_async(dbname).get();
 				Assert::IsTrue(b);
 			}
-			couchdb_doc doc{ m_doc };
-			//
-			update_response rsp = pMan->maintains_document_async(doc).get();
-			if (rsp.ok()) {
-				string_t sid = rsp.id();
-				Assert::IsFalse(sid.empty());
-				string_t srev = rsp.rev();
-				Assert::IsFalse(srev.empty());
-				//
-				string_t sRev2 = pMan->get_document_version_async(sid).get();
-				Assert::AreEqual(srev, sRev2);
-				//
-				couchdb_doc xdoc = pMan->get_document_by_id_async(sid).get();
-				string_t sid2{};
-				bool bx = xdoc.obj_id(sid2);
-				Assert::IsTrue(bx);
-				Assert::AreEqual(sid, sid2);
-				//
-				infomap oMap{ xdoc.get_map() };
-				oMap[U("ival")] = any{ (int)7890 };
-				couchdb_doc xxdoc{ oMap };
-				update_response rsp1 = pMan->maintains_document_async(xxdoc).get();
-				Assert::IsTrue(rsp1.ok());
-				string_t srev1 = rsp1.rev();
-				xdoc.version(srev1);
-				//
-				update_response rsp2 = pMan->delete_document_async(xdoc).get();
-				b = rsp2.ok();
-				Assert::IsTrue(b);
+			string_t sid(U("testid"));
+			couchdb_doc doc = pMan->get_document_by_id_async(sid).get();
+			if (doc.empty()) {
+				update_response r = pMan->maintains_document_async(m_doc).get();
+				Assert::IsTrue(r.ok());
+				doc = pMan->get_document_by_id_async(sid).get();
+				Assert::IsFalse(doc.empty());
 			}
+			Assert::IsTrue(doc.is_persisted());
+			string_t sid2 = doc.id();
+			Assert::AreEqual(sid, sid2);
+			string_t srev = doc.version();
+			Assert::IsFalse(srev.empty());
+			string_t sRev2 = pMan->get_document_version_async(sid).get();
+			Assert::AreEqual(srev, sRev2);
+			infomap oMap{ doc.get_map() };
+			oMap[U("ival")] = any{ (int)7890 };
+			couchdb_doc xdoc{ oMap };
+			update_response rsp1 = pMan->maintains_document_async(xdoc).get();
+			Assert::IsTrue(rsp1.ok());
+			update_response rsp2 = pMan->delete_document_async(doc).get();
+			b = rsp2.ok();
+			Assert::IsTrue(b);
+			sRev2 = pMan->get_document_version_async(sid).get();
+			Assert::IsTrue(sRev2.empty());
+			doc = pMan->get_document_by_id_async(sid).get();
+			Assert::IsTrue(doc.empty());
+			//
 		}//CouchDBManager_CreateDeleteDocument
 		TEST_METHOD(CouchDBManager_CreateIndex)
 		{
@@ -271,7 +271,44 @@ namespace UnitTestInfoData
 			Assert::AreEqual(nt, nx);
 			int nr = pMan->find_documents_count_async(filter).get();
 			Assert::IsTrue(nr == 0);
-		}//CouchDBManager_GetUuids
+		}//CouchDBManager_MaintainsDocs
+		TEST_METHOD(CouchDBManager_Attachment)
+		{
+			couchdb_manager *pMan = m_man.get();
+			Assert::IsNotNull(pMan);
+			string_t dbname = m_dbname;
+			bool b = pMan->exists_database_async(dbname).get();
+			if (!b) {
+				b = pMan->create_database_async(dbname).get();
+				Assert::IsTrue(b);
+			}
+			string_t sid(U("testid"));
+			couchdb_doc doc = pMan->get_document_by_id_async(sid).get();
+			if (doc.empty()) {
+				update_response r = pMan->maintains_document_async(m_doc).get();
+				Assert::IsTrue(r.ok());
+				doc = pMan->get_document_by_id_async(sid).get();
+				Assert::IsFalse(doc.empty());
+			}
+			Assert::IsTrue(doc.is_persisted());
+			string_t filename(U("D:\\testdata\\test.jpg"));
+			blob_data blob{ filename };
+			b = blob.ok();
+			Assert::IsTrue(b);
+			string_t attname = blob.name();
+			update_response rsp = pMan->update_document_attachment_async(doc, blob).get();
+			Assert::IsTrue(rsp.ok());
+			std::shared_ptr<blob_data> bb = pMan->read_document_attachment_async(doc, attname).get();
+			blob_data *pb = bb.get();
+			Assert::IsNotNull(pb);
+			bool bz = pb->ok();
+			Assert::IsTrue(pb->ok());
+			rsp = pMan->delete_document_attachment_async(doc, attname).get();
+			Assert::IsTrue(rsp.ok());
+			std::shared_ptr<blob_data> bb2 = pMan->read_document_attachment_async(doc, attname).get();
+			blob_data *pb2 = bb2.get();
+			Assert::IsFalse(pb2->ok());
+		}// CouchDBManager_Attachment
 	};
 	////////////////////////////
 	std::vector<couchdb_doc> CouchDBManagerTest::st_m_docs;
