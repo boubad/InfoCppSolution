@@ -28,6 +28,9 @@ namespace info {
             void post_create(void);
 			void check_databasename(void);
 			void check_attachments_url(couchdb_doc &doc);
+		protected:
+			std::future<update_response> create_document_async(const couchdb_doc &doc);
+			std::future<update_response> update_document_async(const couchdb_doc &doc);
 		public:
 			couchdb_manager(http_client &client, const databasename &name = databasename{});
 			virtual ~couchdb_manager();
@@ -37,20 +40,23 @@ namespace info {
             const string_t & version(void) const;
 		public:
 			bool get_server_info(server_info &info);
+			//
 			std::future<std::vector<string_t>> get_all_databases_async(void);
 			std::future<std::vector<string_t>> get_uuids_async(int nCount = 1);
 			std::future<bool> exists_database_async(const string_t &dbname);
 			std::future<bool> create_database_async(const string_t &dbname);
 			std::future<bool> delete_database_async(const string_t &dbname);
-			std::future<update_response> create_document_async(const couchdb_doc &doc);
-			std::future<update_response> delete_document_async(const couchdb_doc &doc);
+			//
 			std::future<string_t> get_document_version_async(const string_t &docid);
+			std::future<couchdb_doc> get_document_by_id_async(const string_t &docid, 
+				bool bAttach = true, bool bUrl = true);
+			std::future<update_response> delete_document_async(const couchdb_doc &doc);
+			std::future<update_response> maintains_document_async(const couchdb_doc &doc);
+			//
 			std::future<index_response> create_index_async(const string_t &field,
 				const string_t &ind_name = string_t{},
 				const string_t &stype = U("json"),
 				const string_t &ddoc = string_t{});
-			std::future<couchdb_doc> get_document_by_id_async(const string_t &docid, bool bAttach = true);
-			std::future<update_response> update_document_async(couchdb_doc &doc);
 			std::future<int> find_documents_count_async(const query_filter &filter);
 			std::future<std::vector<couchdb_doc>> find_documents_async(const query_filter &filter);
 			std::future<std::vector<update_response>> maintains_documents_async(const std::vector<couchdb_doc> &vec);

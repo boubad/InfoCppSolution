@@ -15,6 +15,7 @@ namespace info {
 			update_response(const update_response &other);
 			update_response & operator=(const update_response &other);
 			virtual ~update_response();
+			operator bool(void) const { return ok(); }
 		public:
 			bool ok(void) const;
 			int status_code(void) const;

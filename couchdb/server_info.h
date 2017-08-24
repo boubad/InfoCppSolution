@@ -15,6 +15,7 @@ namespace info {
 			server_info(const server_info &other);
 			server_info & operator=(const server_info &other);
 			virtual ~server_info();
+			operator bool(void) const { return ok(); }
 		public:
 			bool ok(void) const;
 			string_t welcome_string(void) const;

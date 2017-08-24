@@ -15,6 +15,7 @@ namespace info {
 			index_response(const index_response &other);
 			index_response & operator=(const index_response &other);
 			virtual ~index_response();
+			operator bool(void) const { return ok(); }
 		public:
 			bool ok(void) const;
 			int status_code(void) const;

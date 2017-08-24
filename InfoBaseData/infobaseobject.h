@@ -20,28 +20,9 @@ namespace info {
 		infobaseobject(const any &oVal);
 		infobaseobject(const infobaseobject &other);
 		infobaseobject & operator=(const infobaseobject &other);
-		infomap & get_map(void);
-		const infomap & get_map(void) const;
-	public:
-		virtual ~infobaseobject();
-		operator any (void) const { return get(); }
-	public:
-		bool empty(void) const;
-		any  get(void) const;
-		void set(const any &oMap);
-		bool obj_id(string_t &sid) const;
-		bool obj_etag(string_t &setag) const;
-		bool obj_version(string_t &sversion) const;
-		bool has_obj_id(void) const;
-		bool has_obj_etag(void) const;
-		bool has_obj_version(void) const;
-		string_t toString(void) const;
-		ostream_t & write_to(ostream_t &os) const;
-		void clear(void);
 	protected:
 		virtual void post_init(void);
 		void erase_property(const string_t &key);
-		void set_any_property(const string_t &key, const any &v);
 		void set_bool_property(const string_t &key, bool b);
 		void set_int_property(const string_t &key, int b);
 		void set_float_property(const string_t &key, float b);
@@ -58,6 +39,23 @@ namespace info {
 		void add_item_toarray(const string_t &key, const string_t & b);
 		void remove_item_fromarray(const string_t &key, const string_t & b);
 	public:
+		virtual ~infobaseobject();
+		operator any (void) const { return get(); }
+		infomap & get_map(void);
+		const infomap & get_map(void) const;
+		void set_any_property(const string_t &key, const any &v);
+		bool empty(void) const;
+		any  get(void) const;
+		void set(const any &oMap);
+		bool obj_id(string_t &sid) const;
+		bool obj_etag(string_t &setag) const;
+		bool obj_version(string_t &sversion) const;
+		bool has_obj_id(void) const;
+		bool has_obj_etag(void) const;
+		bool has_obj_version(void) const;
+		string_t toString(void) const;
+		ostream_t & write_to(ostream_t &os) const;
+		void clear(void);
 		bool has_property(const string_t &key) const;
 		bool get_any_property(const string_t &key, any &v) const;
 		bool get_bool_property(const string_t &key, bool &v) const;

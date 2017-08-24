@@ -170,7 +170,7 @@ namespace UnitTestInfoData
 			}
 			couchdb_doc doc{ m_doc };
 			//
-			update_response rsp = pMan->create_document_async(doc).get();
+			update_response rsp = pMan->maintains_document_async(doc).get();
 			if (rsp.ok()) {
 				string_t sid = rsp.id();
 				Assert::IsFalse(sid.empty());
@@ -185,6 +185,14 @@ namespace UnitTestInfoData
 				bool bx = xdoc.obj_id(sid2);
 				Assert::IsTrue(bx);
 				Assert::AreEqual(sid, sid2);
+				//
+				infomap oMap{ xdoc.get_map() };
+				oMap[U("ival")] = any{ (int)7890 };
+				couchdb_doc xxdoc{ oMap };
+				update_response rsp1 = pMan->maintains_document_async(xxdoc).get();
+				Assert::IsTrue(rsp1.ok());
+				string_t srev1 = rsp1.rev();
+				xdoc.version(srev1);
 				//
 				update_response rsp2 = pMan->delete_document_async(xdoc).get();
 				b = rsp2.ok();

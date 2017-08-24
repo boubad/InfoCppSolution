@@ -9,6 +9,33 @@ namespace info {
 		using namespace info::http;
 		////////////////////////////////
 		static const string_t STRING_SLASH(U("/"));
+		static const string_t URI_ALL_DBS(U("/_all_dbs"));
+		static const string_t URI_UUIDS(U("/_uuids"));
+		static const string_t QUERY_COUNT(U("count"));
+		static const string_t KEY_UUIDS(U("uuids"));
+		static const string_t KEY_OK(U("ok"));
+		static const string_t STRING_UNDERSCORE(U("_"));
+		static const string_t QUERY_REV(U("rev"));
+		static const string_t QUERY_ETAG(U("ETag"));
+		static const string_t KEY_FIELDS(U("fields"));
+		static const string_t KEY_INDEX(U("index"));
+		static const string_t KEY_NAME(U("name"));
+		static const string_t KEY_DDOC(U("ddoc"));
+		static const string_t KEY_TYPE(U("type"));
+		static const string_t URI_INDEX(U("/_index"));
+		static const string_t QUERY_ATTACHMENTS(U("attachments"));
+		static const string_t STRING_TRUE(U("true"));
+		static const string_t URI_FIND(U("/_find"));
+		static const string_t KEY_DOCS(U("docs"));
+		static const string_t URI_BULK_DOCS(U("/_bulk_docs"));
+		/////////////////////////////////
+		static const string_t ERROR_COUCHDB_VERSION(U("Invalid CoudchDB version."));
+		static const string_t ERROR_DATABASE_NAME(U("Invalid database name."));
+		static const string_t ERROR_DOCUMENT_ID(U("Invalid document id."));
+		static const string_t ERROR_DOCUMENT_REV(U("Invalid document revision."));
+		static const string_t ERROR_DOCUMENT_NOT_PERSISTED(U("Invalid document id and (or) revision."));
+		static const string_t ERROR_INVALID_ATTACHMENT(U("Invalid attachment."));
+		static const string_t ERROR_INVALID_ATTACHMENT_NAME(U("Invalid attachment name."));
 		/////////////////////////////
 		couchdb_manager::couchdb_manager(http_client &client, const databasename &name /*= databasename{}*/) :
 			m_client(client)
@@ -16,7 +43,7 @@ namespace info {
 			if (!name.empty()) {
 				string_t sx = stringutils::tolower(stringutils::trim(name));
 				if (sx.empty()) {
-					throw info_exception{ U("Invalid database name.") };
+					throw info_exception{ ERROR_DATABASE_NAME };
 				}
 				m_dbname = sx;
 			}
@@ -45,7 +72,7 @@ namespace info {
         }
 		void couchdb_manager::check_databasename(void) {
 			if (m_dbname.empty()) {
-				throw info_exception{ U("Invalid database name.") };
+				throw info_exception{ ERROR_DATABASE_NAME };
 			}
 		}
 		const string_t & couchdb_manager::database_name(void) const {
@@ -54,7 +81,7 @@ namespace info {
 		void couchdb_manager::database_name(const databasename &name) {
 			string_t sx = stringutils::tolower(stringutils::trim(name));
 			if (sx.empty()) {
-				throw info_exception{ U("Invalid database name.") };
+				throw info_exception{ ERROR_DATABASE_NAME };
 			}
 			m_dbname = sx;
 		}
@@ -73,7 +100,7 @@ namespace info {
 		bool couchdb_manager::get_server_info(server_info &info) {
 			info.clear();
 			bool bRet{ false };
-			dataserviceuri uri{};
+			dataserviceuri uri{STRING_SLASH};
 			info_response_ptr rsp = m_client.get(uri).get();
 			info_response *pRsp = rsp.get();
 			assert(pRsp != nullptr);
@@ -86,7 +113,7 @@ namespace info {
 		std::future<std::vector<string_t>> couchdb_manager::get_all_databases_async(void) {
 			return std::async([this]()->std::vector<string_t> {
 				std::vector<string_t> vRet{};
-				dataserviceuri uri{ U("/_all_dbs") };
+				dataserviceuri uri{ URI_ALL_DBS};
 				info_response_ptr rsp = m_client.get(uri).get();
 				info_response *pRsp = rsp.get();
 				assert(pRsp != nullptr);
@@ -108,7 +135,7 @@ namespace info {
 		std::future<std::vector<string_t>> couchdb_manager::get_uuids_async(int nCount /*= 1*/) {
 			return std::async([this, nCount]()->std::vector<string_t> {
 				std::vector<string_t> vRet{};
-				dataserviceuri uri{ U("/_uuids") };
+				dataserviceuri uri{ URI_UUIDS };
 				int nc = (nCount > 0) ? nCount : 1;
 				query_params query{};
 				string_t sx{};
@@ -117,7 +144,7 @@ namespace info {
 					os << nc;
 					sx = os.str();
 				}
-				query.push_back(std::make_pair(U("count"), sx));
+				query.push_back(std::make_pair(QUERY_COUNT, sx));
 				info_response_ptr rsp = m_client.get(uri, query).get();
 				info_response *pRsp = rsp.get();
 				assert(pRsp != nullptr);
@@ -125,7 +152,7 @@ namespace info {
 					const any &va = pRsp->jsonval;
 					if (va.type() == typeid(infomap)) {
 						infomap oMap = INFO_ANY_CAST<infomap>(va);
-						auto it = oMap.find(U("uuids"));
+						auto it = oMap.find(KEY_UUIDS);
 						if (it != oMap.end()) {
 							any vx = (*it).second;
 							if (vx.type() == typeid(infovector)) {
@@ -146,7 +173,7 @@ namespace info {
 		std::future<bool> couchdb_manager::exists_database_async(const string_t &dbname) {
 			string_t sx = stringutils::tolower(stringutils::trim(dbname));
 			if (sx.empty()) {
-				throw info_exception{ U("Invalid database name.") };
+				throw info_exception{ ERROR_DATABASE_NAME };
 			}
 			std::shared_ptr<string_t> name = std::make_shared<string_t>(sx);
 			return std::async([this, name]()->bool {
@@ -166,7 +193,7 @@ namespace info {
 		std::future<bool> couchdb_manager::create_database_async(const string_t &dbname) {
 			string_t sx = stringutils::tolower(stringutils::trim(dbname));
 			if (sx.empty()) {
-				throw info_exception{ U("Invalid database name.") };
+				throw info_exception{ ERROR_DATABASE_NAME };
 			}
 			std::shared_ptr<string_t> name = std::make_shared<string_t>(sx);
 			return std::async([this, name]()->bool {
@@ -182,7 +209,7 @@ namespace info {
 					const any &va = pRsp->jsonval;
 					if (va.type() == typeid(infomap)) {
 						infomap oMap = INFO_ANY_CAST<infomap>(va);
-						auto it = oMap.find(U("ok"));
+						auto it = oMap.find(KEY_OK);
 						if (it != oMap.end()) {
 							any vx = (*it).second;
 							if (vx.type() == typeid(bool)) {
@@ -197,7 +224,7 @@ namespace info {
 		std::future<bool> couchdb_manager::delete_database_async(const string_t &dbname) {
 			string_t sx = stringutils::tolower(stringutils::trim(dbname));
 			if (sx.empty()) {
-				throw info_exception{ U("Invalid database name.") };
+				throw info_exception{ ERROR_DATABASE_NAME };
 			}
 			std::shared_ptr<string_t> name = std::make_shared<string_t>(sx);
 			return std::async([this, name]()->bool {
@@ -212,7 +239,7 @@ namespace info {
 					const any &va = pRsp->jsonval;
 					if (va.type() == typeid(infomap)) {
 						infomap oMap = INFO_ANY_CAST<infomap>(va);
-						auto it = oMap.find(U("ok"));
+						auto it = oMap.find(KEY_OK);
 						if (it != oMap.end()) {
 							any vx = (*it).second;
 							if (vx.type() == typeid(bool)) {
@@ -224,6 +251,60 @@ namespace info {
 				return (bRet);
 			});
 		}//delete_database_async
+		std::future<update_response> couchdb_manager::maintains_document_async(const couchdb_doc &doc) {
+			std::shared_ptr<couchdb_doc> pv = std::make_shared<couchdb_doc>(doc);
+			assert(pv.get() != nullptr);
+			return std::async([this, pv]()->update_response {
+				string_t sempty{};
+				string_t docid = pv->id();
+				string_t srev = pv->version();
+				if (docid.empty()) {
+					pv->id(sempty);
+					pv->version(sempty);
+				}
+				else {
+					srev = get_document_version_async(docid).get();
+					if (srev.empty()) {
+						pv->version(sempty);
+					}
+					else {
+						couchdb_doc old = get_document_by_id_async(docid, true, false).get();
+						if (!old.empty()) {
+							infomap cur{};
+							const infomap &src = pv->get_map();
+							for (auto it = src.begin(); it != src.end(); ++it) {
+								string_t key = (*it).first;
+								if (key.find_first_of(STRING_UNDERSCORE) != 0) {
+									cur[key] = (*it).second;
+								}
+							}// it
+							const infomap &oldMap = old.get_map();
+							for (auto it = oldMap.begin(); it != oldMap.end(); ++it) {
+								string_t key = (*it).first;
+								if (key.find_first_of(STRING_UNDERSCORE) == 0) {
+									cur[key] = (*it).second;
+								}
+							}// it
+							couchdb_doc dCur{ cur };
+							return update_document_async(dCur).get();
+						}// not empty
+					}
+				}
+				infomap cur{};
+				const infomap &src = pv->get_map();
+				for (auto it = src.begin(); it != src.end(); ++it) {
+					string_t key = (*it).first;
+					if (key.find_first_of(STRING_UNDERSCORE) != 0) {
+						cur[key] = (*it).second;
+					}
+					else if (key == couchdb_doc::KEY_ID) {
+						cur[key] = (*it).second;
+					}
+				}// it
+				couchdb_doc dCur{ cur };
+				return create_document_async(dCur).get();
+			});
+		}//maintains_document_async
 		std::future<update_response> couchdb_manager::create_document_async(const couchdb_doc &doc) {
 			std::shared_ptr<couchdb_doc> pa = std::make_shared<couchdb_doc>(doc);
 			return std::async([this, pa]()->update_response {
@@ -250,18 +331,20 @@ namespace info {
 			return std::async([this, pa]()->update_response {
 				check_databasename();
 				couchdb_doc *pDoc = pa.get();
-				string_t sid{}, srev{};
-				pDoc->obj_id(sid);
-				pDoc->obj_version(srev);
-				if (sid.empty() || srev.empty()) {
-					throw info_exception{ U("Invalid document.") };
+				string_t sid = pDoc->id();
+				if (sid.empty()) {
+					throw info_exception{ ERROR_DOCUMENT_ID };
+				}
+				string_t srev = get_document_version_async(sid).get();
+				if (srev.empty()) {
+					throw info_exception{ ERROR_DOCUMENT_REV };
 				}
 				update_response bRet{};
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
 				suri += STRING_SLASH + url_encode(sid);
 				query_params query{};
-				query.push_back(std::make_pair(U("rev"), srev));
+				query.push_back(std::make_pair(QUERY_REV, srev));
 				dataserviceuri uri{ suri };
 				info_response_ptr rsp = m_client.del(uri, query).get();
 				info_response *pRsp = rsp.get();
@@ -280,7 +363,7 @@ namespace info {
 				check_databasename();
 				string_t sid = *si;
 				if (sid.empty()) {
-					throw info_exception{ U("Invalid document id.") };
+					throw info_exception{ ERROR_DOCUMENT_ID };
 				}
 				string_t bRet{};
 				string_t suri{ STRING_SLASH };
@@ -292,8 +375,7 @@ namespace info {
 				assert(pRsp != nullptr);
 				if (!pRsp->has_error()) {
 					const std::map<string_t, string_t> &oMap = pRsp->headers;
-					string_t key(U("ETag"));
-					auto it = oMap.find(key);
+					auto it = oMap.find(QUERY_ETAG);
 					if (it != oMap.end()) {
 						string_t s = (*it).second;
 						size_t n = s.length();
@@ -312,17 +394,17 @@ namespace info {
 			infovector vx{};
 			vx.push_back( any{field} );
 			infomap xMap{};
-			xMap[U("fields")] = any{ vx };
+			xMap[KEY_FIELDS] = any{ vx };
 			infomap oMap{};
-			oMap[U("index")] = any{ xMap };
+			oMap[KEY_INDEX] = any{ xMap };
 			if (!ind_name.empty()) {
-				oMap[U("name")] = any{ ind_name };
+				oMap[KEY_NAME] = any{ ind_name };
 			}
 			if (!ddoc.empty()) {
-				oMap[U("ddoc")] = any{ ddoc };
+				oMap[KEY_DDOC] = any{ ddoc };
 			}
 			if (!stype.empty()) {
-				oMap[U("type")] = any{ stype };
+				oMap[KEY_TYPE] = any{ stype };
 			}
 			any doc{ oMap };
 			std::shared_ptr<any> pa = std::make_shared<any>(doc);
@@ -331,7 +413,7 @@ namespace info {
 				index_response bRet{};
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
-				suri += STRING_SLASH + U("_index");
+				suri += URI_INDEX;
 				dataserviceuri uri{ suri };
 				info_response_ptr rsp = m_client.post(uri, *pa).get();
 				info_response *pRsp = rsp.get();
@@ -344,9 +426,10 @@ namespace info {
 				return (bRet);
 			});
 		}//create_index_async
-		std::future<couchdb_doc> couchdb_manager::get_document_by_id_async(const string_t &sid, bool bAttach /*= true*/) {
+		std::future<couchdb_doc> couchdb_manager::get_document_by_id_async(const string_t &sid, 
+			bool bAttach /*= true*/,bool bUrl /*= true*/) {
 			std::shared_ptr<string_t> si = std::make_shared<string_t>(sid);
-			return std::async([this, si,bAttach]()->couchdb_doc {
+			return std::async([this, si,bAttach,bUrl]()->couchdb_doc {
 				check_databasename();
 				couchdb_doc bRet{};
 				string_t suri{ STRING_SLASH };
@@ -355,7 +438,7 @@ namespace info {
 				dataserviceuri uri{ suri };
 				query_params query{};
 				if (bAttach) {
-					query.push_back(std::make_pair(U("attachments"), U("true")));
+					query.push_back(std::make_pair(QUERY_ATTACHMENTS, STRING_TRUE));
 				}
 				info_response_ptr rsp = m_client.get(uri,query).get();
 				info_response *pRsp = rsp.get();
@@ -363,27 +446,29 @@ namespace info {
 				if (!pRsp->has_error()) {
 					any va = pRsp->jsonval;
 					bRet.set(va);
-					this->check_attachments_url(bRet);
+					if (bUrl) {
+						this->check_attachments_url(bRet);
+					}
 				}
 				return (bRet);
 			});
 		}//get_document_by_id_as
-		std::future<update_response> couchdb_manager::update_document_async(couchdb_doc &doc) {
+		std::future<update_response> couchdb_manager::update_document_async(const couchdb_doc &doc) {
 			std::shared_ptr<couchdb_doc> pa = std::make_shared<couchdb_doc>(doc);
 			return std::async([this, pa]()->update_response {
 				check_databasename();
-				string_t sid{}, srev{};
 				couchdb_doc *pDoc = pa.get();
 				if (!pDoc->is_persisted()) {
-					throw info_exception{ U("Invalid document.") };
+					throw info_exception{ ERROR_DOCUMENT_NOT_PERSISTED };
 				}
-				pDoc->clean_attachments();
+				string_t sid = pDoc->id();
+				string_t srev = pDoc->version();
 				update_response bRet{};
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
 				suri += STRING_SLASH + url_encode(sid);
 				query_params query{};
-				query.push_back(std::make_pair(U("rev"), srev));
+				query.push_back(std::make_pair(QUERY_REV, srev));
 				dataserviceuri uri{ suri };
 				any vdoc{ pDoc->get() };
 				info_response_ptr rsp = m_client.put(uri, vdoc,query).get();
@@ -399,7 +484,7 @@ namespace info {
 		}//update_document_async
 		std::future<int>  couchdb_manager::find_documents_count_async(const query_filter &filter) {
             if (!can_use_mango()){
-                throw info_exception(U("Invalid couchdb version"));
+                throw info_exception(ERROR_COUCHDB_VERSION);
             }
 			std::shared_ptr<query_filter> pf = std::make_shared<query_filter>(filter);
 			return std::async([this, pf]()->int {
@@ -409,11 +494,10 @@ namespace info {
 				oFilter.clear_projection();
 				oFilter.set_skip(0);
 				oFilter.set_limit(INT_MAX);
-				string_t ff(U("_id"));
-				oFilter.add_projection_field(ff);
+				oFilter.add_projection_field(couchdb_doc::KEY_ID);
 				int bRet{-1};
 				string_t suri{ STRING_SLASH };
-				suri += this->m_dbname + U("/_find");
+				suri += this->m_dbname + URI_FIND;
 				dataserviceuri uri{ suri };
 				any a = oFilter.get();
 				info_response_ptr rsp = m_client.post(uri, a).get();
@@ -423,7 +507,7 @@ namespace info {
 					const any &va = pRsp->jsonval;
 					if (va.type() == typeid(infomap)) {
 						infomap oMap = INFO_ANY_CAST<infomap>(va);
-						auto it = oMap.find(U("docs"));
+						auto it = oMap.find(KEY_DOCS);
 						if (it != oMap.end()) {
 							any &vx = (*it).second;
 							if (vx.type() == typeid(infovector)) {
@@ -438,14 +522,14 @@ namespace info {
 		}// find_documents_count_async
 		std::future<std::vector<couchdb_doc>> couchdb_manager::find_documents_async(const query_filter &filter) {
              if (!can_use_mango()){
-                throw info_exception(U("Invalid couchdb version"));
+                throw info_exception(ERROR_COUCHDB_VERSION);
             }
 			std::shared_ptr<query_filter> pf = std::make_shared<query_filter>(filter);
 			return std::async([this, pf]()->std::vector<couchdb_doc> {
 				check_databasename();
 				std::vector<couchdb_doc> bRet{};
 				string_t suri{ STRING_SLASH };
-				suri += this->m_dbname + U("/_find");
+				suri += this->m_dbname + URI_FIND;
 				dataserviceuri uri{ suri };
 				any a = (*pf).get();
 				info_response_ptr rsp = m_client.post(uri, a).get();
@@ -455,7 +539,7 @@ namespace info {
 					const any &va = pRsp->jsonval;
 					if (va.type() == typeid(infomap)) {
 						infomap oMap = INFO_ANY_CAST<infomap>(va);
-						auto it = oMap.find(U("docs"));
+						auto it = oMap.find(KEY_DOCS);
 						if (it != oMap.end()) {
 							any &vx = (*it).second;
 							if (vx.type() == typeid(infovector)) {
@@ -477,7 +561,7 @@ namespace info {
 				check_databasename();
 				std::vector<update_response> bRet{};
 				string_t suri{ STRING_SLASH };
-				suri += this->m_dbname + U("/_bulk_docs");
+				suri += this->m_dbname + URI_BULK_DOCS;
 				dataserviceuri uri{ suri };
 				infovector vx{};
 				for (auto it = pf->begin(); it != pf->end(); ++it) {
@@ -510,14 +594,26 @@ namespace info {
 			std::shared_ptr<couchdb_doc> pf = std::make_shared<couchdb_doc>(doc);
 			std::shared_ptr<string_t> xname = std::make_shared<string_t>(name);
 			return std::async([this, pf, xname]()->std::shared_ptr<blob_data> {
-				if (!pf->is_persisted()) {
-					throw info_exception{ U("Invalid document.") };
+				if (xname->empty()) {
+					throw info_exception{ ERROR_INVALID_ATTACHMENT_NAME };
+				}
+				string_t docid = pf->id();
+				if (docid.empty()) {
+					throw info_exception{ ERROR_DOCUMENT_ID };
+				}
+				string_t srev = this->get_document_version_async(docid).get();
+				if (srev.empty()) {
+					throw info_exception{ ERROR_DOCUMENT_REV };
 				}
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
 				suri += STRING_SLASH + url_encode(pf->id()) + STRING_SLASH + url_encode(*xname);
 				dataserviceuri uri{ suri };
 				std::shared_ptr<blob_data> oRet = m_client.read_blob(uri).get();
+				if (oRet.get() != nullptr) {
+					oRet->id(docid);
+					oRet->version(srev);
+				}
 				return (oRet);
 			});
 		}
@@ -526,16 +622,25 @@ namespace info {
 			std::shared_ptr<couchdb_doc> pf = std::make_shared<couchdb_doc>(doc);
 			std::shared_ptr<blob_data> pv = std::make_shared<blob_data>(blob);
 			return std::async([this, pf, pv]()->update_response {
-				if (!pf->is_persisted()) {
-					throw info_exception{ U("Invalid document.") };
+				if (!pv->ok()) {
+					throw info_exception{ ERROR_INVALID_ATTACHMENT };
 				}
+				string_t docid = pf->id();
+				if (docid.empty()) {
+					throw info_exception{ ERROR_DOCUMENT_ID };
+				}
+				string_t srev = get_document_version_async(docid).get();
+				if (srev.empty()) {
+					throw info_exception{ ERROR_DOCUMENT_REV };
+				}
+				pv->id(docid);
+				pv->version(srev);
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
-				suri += STRING_SLASH + url_encode(pf->id()) + STRING_SLASH + url_encode(pv->name());
+				suri += STRING_SLASH + url_encode(docid) + STRING_SLASH + url_encode(pv->name());
 				dataserviceuri uri{ suri };
 				query_params query{};
-				string_t srev = pf->version();
-				query.push_back(std::make_pair(U("rev"), srev));
+				query.push_back(std::make_pair(QUERY_REV, srev));
 				info_response_ptr rsp = m_client.maintains_blob(uri, *pv, query).get();
 				info_response *pRsp = rsp.get();
 				assert(pRsp != nullptr);
@@ -553,16 +658,23 @@ namespace info {
 			std::shared_ptr<couchdb_doc> pf = std::make_shared<couchdb_doc>(doc);
 			std::shared_ptr<string_t> xname = std::make_shared<string_t>(name);
 			return std::async([this, pf, xname]()->update_response {
-				if (!pf->is_persisted()) {
-					throw info_exception{ U("Invalid document.") };
+				if (xname->empty()) {
+					throw info_exception{ ERROR_INVALID_ATTACHMENT_NAME };
+				}
+				string_t docid = pf->id();
+				if (docid.empty()) {
+					throw info_exception{ ERROR_DOCUMENT_ID };
+				}
+				string_t srev = this->get_document_version_async(docid).get();
+				if (srev.empty()) {
+					throw info_exception{ ERROR_DOCUMENT_REV };
 				}
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
 				suri += STRING_SLASH + url_encode(pf->id()) + STRING_SLASH + url_encode(*xname);
 				dataserviceuri uri{ suri };
 				query_params query{};
-				string_t srev = pf->version();
-				query.push_back(std::make_pair(U("rev"), srev));
+				query.push_back(std::make_pair(QUERY_REV, srev));
 				info_response_ptr rsp = m_client.del(uri, query).get();
 				info_response *pRsp = rsp.get();
 				assert(pRsp != nullptr);

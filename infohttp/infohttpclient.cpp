@@ -393,7 +393,10 @@ namespace info {
 					req->headers().add((*it).first, (*it).second);
 				}//it
 				req->set_request_uri(*ps);
-				req->set_body(pv->data());
+				size_t n{ 0 };
+				const byte *pData = pv->data(n);
+				std::vector<byte> vec{ pData, pData + n };
+				req->set_body(vec);
 				req->headers().add(HEADER_CONTENT_TYPE, pv->mime_type());
 				info_http_response_ptr rsp = std::make_shared<info_http_response>();
 				assert(rsp.get() != nullptr);
@@ -465,7 +468,7 @@ namespace info {
 				}).then([oRet](task<std::vector<unsigned char > > previousTask) {
 					try {
 						blob_data *p = oRet.get();
-						std::vector<unsigned char> vec = previousTask.get();
+						std::vector<byte> vec = previousTask.get();
 						p->data(vec);
 					}
 					catch (std::exception & /*ex*/) {

@@ -10,27 +10,43 @@ namespace info {
 	public:
 		using byte = unsigned char;
 	private:
+		size_t  m_size;
 		string_t m_id;
+		string_t m_rev;
 		string_t m_name;
 		string_t m_mime;
 		string_t m_url;
-		std::vector<byte> m_data;
+		std::shared_ptr<byte> m_data;
 	public:
 		blob_data();
 		blob_data(const string_t &sname, const string_t &smime, const std::vector<byte> &d,
 			const string_t &sid = string_t{});
 		blob_data(const blob_data &other);
 		blob_data & operator=(const blob_data &other);
-		~blob_data();
+		virtual ~blob_data();
+		operator bool(void) const { return ok(); }
 	public:
 		bool ok(void) const {
-			return (!m_mime.empty()) && (m_data.size() > 0);
+			return (!m_name.empty()) && (!m_mime.empty()) && (m_size > 0) && (m_data.get() != nullptr);
 		}// ok
+		size_t size(void) const {
+			return m_size;
+		}
+		const byte *data(size_t & nLength) const {
+			nLength = m_size;
+			return (m_data.get());
+		}
 		const string_t &id(void) const {
 			return m_id;
 		}
 		void id(const string_t &s) {
 			m_id = s;
+		}
+		const string_t &version(void) const {
+			return m_rev;
+		}
+		void version(const string_t &s) {
+			m_rev = s;
 		}
 		const string_t &name(void) const {
 			return m_name;
@@ -50,12 +66,8 @@ namespace info {
 		void url(const string_t &s) {
 			m_url = s;
 		}
-		const std::vector<byte> &data(void) const {
-			return m_data;
-		}
-		void data(const std::vector<byte> &vec) {
-			m_data = vec;
-		}
+		void data(const byte *pData, size_t nLength);
+		void data(const std::vector<byte> &vec);
 	};// class blob_data
 }// namespace info
 /////////////////////////////
