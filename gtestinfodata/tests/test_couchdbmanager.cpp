@@ -69,7 +69,9 @@ protected:
         ASSERT_TRUE(m_man.get() != nullptr);
         //
         infomap oMap {};
+        string_t sid(U("testid"));
         string_t textval(U("string testvalue"));
+        oMap[U("_id")] = any { sid };
         oMap[U("bval")] = any { true };
         oMap[U("ival")] = any { (int)1234 };
         oMap[U("dval")] = any { 3.14159 };
@@ -153,28 +155,33 @@ TEST_F(CouchDBManagerTest,Documents)
         b = pMan->create_database_async(dbname).get();
         ASSERT_TRUE(b);
     }
-    couchdb_doc doc { m_doc };
-    //
-    update_response rsp = pMan->create_document_async(doc).get();
-    if (rsp.ok()) {
-        string_t sid = rsp.id();
-        ASSERT_TRUE(!sid.empty());
-        string_t srev = rsp.rev();
-        ASSERT_TRUE(!srev.empty());
-        //
-        string_t sRev2 = pMan->get_document_version_async(sid).get();
-        ASSERT_EQ(srev, sRev2);
-        //
-        couchdb_doc xdoc = pMan->get_document_by_id_async(sid).get();
-        string_t sid2 {};
-        bool bx = xdoc.obj_id(sid2);
-        ASSERT_TRUE(bx);
-        ASSERT_EQ(sid, sid2);
-        //
-        update_response rsp2 = pMan->delete_document_async(xdoc).get();
-        b = rsp2.ok();
-        ASSERT_TRUE(b);
+    string_t sid(U("testid"));
+    couchdb_doc doc = pMan->get_document_by_id_async(sid).get();
+    if (doc.empty()) {
+        update_response r = pMan->maintains_document_async(m_doc).get();
+        ASSERT_TRUE(r.ok());
+        doc = pMan->get_document_by_id_async(sid).get();
+        ASSERT_TRUE(!doc.empty());
     }
+    ASSERT_TRUE(doc.is_persisted());
+    string_t sid2 = doc.id();
+    ASSERT_EQ(sid, sid2);
+    string_t srev = doc.version();
+    ASSERT_TRUE(!srev.empty());
+    string_t sRev2 = pMan->get_document_version_async(sid).get();
+    ASSERT_EQ(srev, sRev2);
+    infomap oMap { doc.get_map() };
+    oMap[U("ival")] = any { (int)7890 };
+    couchdb_doc xdoc { oMap };
+    update_response rsp1 = pMan->maintains_document_async(xdoc).get();
+    ASSERT_TRUE(rsp1.ok());
+    update_response rsp2 = pMan->delete_document_async(doc).get();
+    b = rsp2.ok();
+    ASSERT_TRUE(b);
+    sRev2 = pMan->get_document_version_async(sid).get();
+    ASSERT_TRUE(sRev2.empty());
+    doc = pMan->get_document_by_id_async(sid).get();
+    ASSERT_TRUE(doc.empty());
 }// Documents
 TEST_F(CouchDBManagerTest,Index)
 {
@@ -245,5 +252,42 @@ TEST_F(CouchDBManagerTest,Bulk)
     int nr = pMan->find_documents_count_async(filter).get();
     ASSERT_TRUE(nr == 0);
 }// Bulk
+TEST_F(CouchDBManagerTest,Attachments)
+{
+    couchdb_manager *pMan = m_man.get();
+    ASSERT_TRUE(pMan != nullptr);
+    string_t dbname = m_dbname;
+    bool b = pMan->exists_database_async(dbname).get();
+    if (!b) {
+        b = pMan->create_database_async(dbname).get();
+        ASSERT_TRUE(b);
+    }
+    string_t sid(U("testid"));
+    couchdb_doc doc = pMan->get_document_by_id_async(sid).get();
+    if (doc.empty()) {
+        update_response r = pMan->maintains_document_async(m_doc).get();
+        ASSERT_TRUE(r.ok());
+        doc = pMan->get_document_by_id_async(sid).get();
+        ASSERT_TRUE(!doc.empty());
+    }
+    ASSERT_TRUE(doc.is_persisted());
+    string_t filename(U("/home/boubad/testdata/test.jpg"));
+    blob_data blob { filename };
+    b = blob.ok();
+    ASSERT_TRUE(b);
+    string_t attname = blob.name();
+    update_response rsp = pMan->update_document_attachment_async(doc, blob).get();
+    ASSERT_TRUE(rsp.ok());
+    std::shared_ptr<blob_data> bb = pMan->read_document_attachment_async(doc, attname).get();
+    blob_data *pb = bb.get();
+    ASSERT_TRUE(pb != nullptr);
+    bool bz = pb->ok();
+    ASSERT_TRUE(bz);
+    rsp = pMan->delete_document_attachment_async(doc, attname).get();
+    ASSERT_TRUE(rsp.ok());
+    std::shared_ptr<blob_data> bb2 = pMan->read_document_attachment_async(doc, attname).get();
+    blob_data *pb2 = bb2.get();
+    ASSERT_TRUE(!pb2->ok());
+}// Databases
 ////////////////////////////
 }// namespace
