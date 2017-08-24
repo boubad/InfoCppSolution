@@ -614,6 +614,7 @@ namespace info {
 					oRet->id(docid);
 					oRet->version(srev);
 					oRet->name(*xname);
+                    oRet->url(this->form_attachment_url(docid,*xname));
 				}
 				return (oRet);
 			});

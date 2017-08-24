@@ -63,6 +63,9 @@ namespace info {
 		string_t mime_type(void) const {
 			return (m_mimes.empty()) ? string_t{} : m_mimes[0];
 		}
+		const std::vector<string_t> mimes(void) const {
+            return (m_mimes);
+        }
 		void mime_type(const string_t &s);
 		const string_t &url(void) const {
 			return m_url;
