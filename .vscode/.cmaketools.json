@@ -1,5 +1,258 @@
 {
-  "variant": null,
+  "variant": {
+    "label": "Debug",
+    "keywordSettings": {
+      "buildType": "debug"
+    },
+    "description": "Emit debug information without performing optimizations"
+  },
   "activeEnvironments": [],
-  "codeModel": null
+  "codeModel": {
+    "configurations": [
+      {
+        "name": "Debug",
+        "projects": [
+          {
+            "buildDirectory": "/home/boubad/projects/c++/InfoCppSolution/build",
+            "name": "infocppsolution",
+            "sourceDirectory": "/home/boubad/projects/c++/InfoCppSolution",
+            "targets": [
+              {
+                "artifacts": [
+                  "/home/boubad/projects/c++/InfoCppSolution/build/InfoBaseData/libInfoBaseData.a"
+                ],
+                "buildDirectory": "/home/boubad/projects/c++/InfoCppSolution/build/InfoBaseData",
+                "fileGroups": [
+                  {
+                    "compileFlags": "-std=c++1z -Wall -g  ",
+                    "includePath": [
+                      {
+                        "path": "/usr/include/eigen3"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./infohttp"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./couchdb"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./InfoBaseData"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./infodomain"
+                      },
+                      {
+                        "path": "/usr/lib/fltk"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "blob_data.cpp",
+                      "http_client.cpp",
+                      "info_response.cpp",
+                      "infobaseobject.cpp",
+                      "InfoDefs.cpp",
+                      "stringutils.cpp"
+                    ]
+                  }
+                ],
+                "fullName": "libInfoBaseData.a",
+                "linkerLanguage": "CXX",
+                "name": "InfoBaseData",
+                "sourceDirectory": "/home/boubad/projects/c++/InfoCppSolution/InfoBaseData",
+                "type": "STATIC_LIBRARY"
+              },
+              {
+                "artifacts": [
+                  "/home/boubad/projects/c++/InfoCppSolution/build/infohttp/libinfohttp.a"
+                ],
+                "buildDirectory": "/home/boubad/projects/c++/InfoCppSolution/build/infohttp",
+                "fileGroups": [
+                  {
+                    "compileFlags": "-std=c++1z -Wall -g  ",
+                    "includePath": [
+                      {
+                        "path": "/usr/include/eigen3"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./infohttp"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./couchdb"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./InfoBaseData"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./infodomain"
+                      },
+                      {
+                        "path": "/usr/lib/fltk"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "http_manager.cpp",
+                      "http_utils.cpp",
+                      "info_http_utils.cpp",
+                      "infoconv.cpp",
+                      "infohttpclient.cpp",
+                      "serial_http_client.cpp"
+                    ]
+                  }
+                ],
+                "fullName": "libinfohttp.a",
+                "linkerLanguage": "CXX",
+                "name": "infohttp",
+                "sourceDirectory": "/home/boubad/projects/c++/InfoCppSolution/infohttp",
+                "type": "STATIC_LIBRARY"
+              },
+              {
+                "artifacts": [
+                  "/home/boubad/projects/c++/InfoCppSolution/build/couchdb/libcouchdb.a"
+                ],
+                "buildDirectory": "/home/boubad/projects/c++/InfoCppSolution/build/couchdb",
+                "fileGroups": [
+                  {
+                    "compileFlags": "-std=c++1z -Wall -g  ",
+                    "includePath": [
+                      {
+                        "path": "/usr/include/eigen3"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./infohttp"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./couchdb"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./InfoBaseData"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./infodomain"
+                      },
+                      {
+                        "path": "/usr/lib/fltk"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "attachment_info.cpp",
+                      "couchdb_doc.cpp",
+                      "couchdb_manager.cpp",
+                      "index_response.cpp",
+                      "query_filter.cpp",
+                      "server_info.cpp",
+                      "update_response.cpp",
+                      "sigletype_doc.cpp"
+                    ]
+                  }
+                ],
+                "fullName": "libcouchdb.a",
+                "linkerLanguage": "CXX",
+                "name": "couchdb",
+                "sourceDirectory": "/home/boubad/projects/c++/InfoCppSolution/couchdb",
+                "type": "STATIC_LIBRARY"
+              },
+              {
+                "artifacts": [
+                  "/home/boubad/projects/c++/InfoCppSolution/build/infodomain/libinfodomain.a"
+                ],
+                "buildDirectory": "/home/boubad/projects/c++/InfoCppSolution/build/infodomain",
+                "fileGroups": [
+                  {
+                    "compileFlags": "-std=c++1z -Wall -g  ",
+                    "includePath": [
+                      {
+                        "path": "/usr/include/eigen3"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./infohttp"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./couchdb"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./InfoBaseData"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./infodomain"
+                      },
+                      {
+                        "path": "/usr/lib/fltk"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "domainstrings.cpp",
+                      "etud_strings.cpp",
+                      "info_baseitem.cpp",
+                      "info_etudiant.cpp"
+                    ]
+                  }
+                ],
+                "fullName": "libinfodomain.a",
+                "linkerLanguage": "CXX",
+                "name": "infodomain",
+                "sourceDirectory": "/home/boubad/projects/c++/InfoCppSolution/infodomain",
+                "type": "STATIC_LIBRARY"
+              },
+              {
+                "artifacts": [
+                  "/home/boubad/projects/c++/InfoCppSolution/build/gtestinfodata/gtestinfodata"
+                ],
+                "buildDirectory": "/home/boubad/projects/c++/InfoCppSolution/build/gtestinfodata",
+                "fileGroups": [
+                  {
+                    "compileFlags": "-std=c++1z -Wall -g  ",
+                    "includePath": [
+                      {
+                        "path": "/usr/include/eigen3"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./infohttp"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./couchdb"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./InfoBaseData"
+                      },
+                      {
+                        "path": "/home/boubad/projects/c++/InfoCppSolution/./infodomain"
+                      },
+                      {
+                        "path": "/usr/lib/fltk"
+                      }
+                    ],
+                    "isGenerated": false,
+                    "language": "CXX",
+                    "sources": [
+                      "main.cpp",
+                      "tests/test_couchdbmanager.cpp"
+                    ]
+                  }
+                ],
+                "fullName": "gtestinfodata",
+                "linkFlags": "-rdynamic",
+                "linkLanguageFlags": "-std=c++1z -Wall -g",
+                "linkLibraries": "-lgtest ../infodomain/libinfodomain.a ../couchdb/libcouchdb.a ../infohttp/libinfohttp.a ../InfoBaseData/libInfoBaseData.a -lcpprest -lboost_system -lssl -lcrypto -lpthread",
+                "linkerLanguage": "CXX",
+                "name": "gtestinfodata",
+                "sourceDirectory": "/home/boubad/projects/c++/InfoCppSolution/gtestinfodata",
+                "type": "EXECUTABLE"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "cookie": "0.7942211450183423",
+    "inReplyTo": "codemodel",
+    "type": "reply"
+  }
 }
