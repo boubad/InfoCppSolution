@@ -48,8 +48,7 @@ namespace info {
 			std::future<bool> delete_database_async(const string_t &dbname);
 			//
 			std::future<string_t> get_document_version_async(const string_t &docid);
-			std::future<couchdb_doc> get_document_by_id_async(const string_t &docid, 
-				bool bAttach = true, bool bUrl = true);
+			std::future<couchdb_doc> get_document_by_id_async(const string_t &docid, bool bUrl = true);
 			std::future<update_response> delete_document_async(const couchdb_doc &doc);
 			std::future<update_response> maintains_document_async(const couchdb_doc &doc);
 			//

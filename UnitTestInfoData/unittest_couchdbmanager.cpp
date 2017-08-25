@@ -298,6 +298,17 @@ namespace UnitTestInfoData
 			string_t attname = blob.name();
 			update_response rsp = pMan->update_document_attachment_async(doc, blob).get();
 			Assert::IsTrue(rsp.ok());
+			doc = pMan->get_document_by_id_async(sid).get();
+			std::vector<attachment_info> vec{};
+			size_t nu = doc.attachments(vec);
+			Assert::IsTrue(nu > 0);
+			for (auto p : vec) {
+				string_t xu = p.url();
+				Assert::IsTrue(!xu.empty());
+				string_t xc = p.content_type();
+				string_t s = p.toString();
+				Logger::WriteMessage(s.c_str());
+			}//p
 			std::shared_ptr<blob_data> bb = pMan->read_document_attachment_async(doc, attname).get();
 			blob_data *pb = bb.get();
 			Assert::IsNotNull(pb);

@@ -9,6 +9,7 @@ namespace info {
 	{
 	public:
 		using byte = unsigned char;
+		static string_t fetch_mime_type(const string_t &sext);
 	private:
 		size_t  m_size;
 		string_t m_id;
@@ -31,6 +32,9 @@ namespace info {
 		bool ok(void) const {
 			return (!m_name.empty()) && (!m_mimes.empty()) && (m_size > 0) && (m_data.get() != nullptr);
 		}// ok
+		bool has_data(void) const {
+			return (m_size > 0) && (m_data.get() != nullptr);
+		}
 		size_t size(void) const {
 			return m_size;
 		}
@@ -60,13 +64,11 @@ namespace info {
 		void name(const string_t &s) {
 			m_name = s;
 		}
-		string_t mime_type(void) const {
-			return (m_mimes.empty()) ? string_t{} : m_mimes[0];
-		}
+		string_t mime_type(void) const;
+		void mime_type(const string_t &s);
 		const std::vector<string_t> mimes(void) const {
             return (m_mimes);
         }
-		void mime_type(const string_t &s);
 		const string_t &url(void) const {
 			return m_url;
 		}

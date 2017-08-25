@@ -92,7 +92,6 @@ namespace info {
 			return (s0);
 		}//form_attachment_url
 		void couchdb_manager::check_attachments_url(couchdb_doc &doc) {
-			string_t docid = doc.id();
 			string_t sx = (const string_t &)m_client.get_serverurl();
 			string_t sbase = sx + STRING_SLASH + this->m_dbname;
 			doc.update_attachments_urls(sbase);
@@ -268,7 +267,7 @@ namespace info {
 						pv->version(sempty);
 					}
 					else {
-						couchdb_doc old = get_document_by_id_async(docid, true, false).get();
+						couchdb_doc old = get_document_by_id_async(docid,false).get();
 						if (!old.empty()) {
 							infomap cur{};
 							const infomap &src = pv->get_map();
@@ -427,20 +426,16 @@ namespace info {
 			});
 		}//create_index_async
 		std::future<couchdb_doc> couchdb_manager::get_document_by_id_async(const string_t &sid, 
-			bool bAttach /*= true*/,bool bUrl /*= true*/) {
+			bool bUrl /*= true*/) {
 			std::shared_ptr<string_t> si = std::make_shared<string_t>(sid);
-			return std::async([this, si,bAttach,bUrl]()->couchdb_doc {
+			return std::async([this, si,bUrl]()->couchdb_doc {
 				check_databasename();
 				couchdb_doc bRet{};
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
 				suri += STRING_SLASH + stringutils::url_encode(*si);
 				dataserviceuri uri{ suri };
-				query_params query{};
-				if (bAttach) {
-					query.push_back(std::make_pair(QUERY_ATTACHMENTS, STRING_TRUE));
-				}
-				info_response_ptr rsp = m_client.get(uri,query).get();
+				info_response_ptr rsp = m_client.get(uri).get();
 				info_response *pRsp = rsp.get();
 				assert(pRsp != nullptr);
 				if (!pRsp->has_error()) {
@@ -624,7 +619,8 @@ namespace info {
 			std::shared_ptr<couchdb_doc> pf = std::make_shared<couchdb_doc>(doc);
 			std::shared_ptr<blob_data> pv = std::make_shared<blob_data>(blob);
 			return std::async([this, pf, pv]()->update_response {
-				if (!pv->ok()) {
+				string_t name = pv->name();
+				if (name.empty() || (!pv->has_data())) {
 					throw info_exception{ ERROR_INVALID_ATTACHMENT };
 				}
 				string_t docid = pf->id();
@@ -639,7 +635,7 @@ namespace info {
 				pv->version(srev);
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
-				suri += STRING_SLASH + stringutils::url_encode(docid) + STRING_SLASH + stringutils::url_encode(pv->name());
+				suri += STRING_SLASH + stringutils::url_encode(docid) + STRING_SLASH + stringutils::url_encode(name);
 				dataserviceuri uri{ suri };
 				query_params query{};
 				query.push_back(std::make_pair(QUERY_REV, srev));

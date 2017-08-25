@@ -11,23 +11,23 @@ namespace info {
         //////////////////////////////
         class couchdb_manager;
         /////////////////////////////
-        class sigletype_doc : public couchdb_doc {
+        class keytype_doc : public couchdb_doc {
         public:
             static const string_t KEY_TYPE;
             static const string_t KEY_SIGLE;
         public:
-            sigletype_doc();
-            sigletype_doc(const any &va);
-            sigletype_doc(const sigletype_doc &other);
-            sigletype_doc & operator=(const sigletype_doc &other);
-            virtual ~sigletype_doc();
+            keytype_doc();
+            keytype_doc(const any &va);
+            keytype_doc(const keytype_doc &other);
+            keytype_doc & operator=(const keytype_doc &other);
+            virtual ~keytype_doc();
         protected:
             void type(const string_t &s);
             virtual void unique_properties(std::vector<string_t> &vec) const;
         public:
             string_t type(void) const;
-            string_t sigle(void) const;
-            void sigle(const string_t &s);
+            any key(void) const;
+            void key(const any &as);
         public:
             std::future<bool> load(couchdb_manager &oMan);
             std::future<bool> save(couchdb_manager &oMan);

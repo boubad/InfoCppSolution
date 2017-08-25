@@ -36,6 +36,7 @@ namespace info {
 			if (sx[n - 1] == CHAR_SLASH) {
 				sx = sx.substr(0, n - 1);
 			}
+			m_url = serverurl{ sx };
 			if ((!user.empty()) && (!pass.empty())) {
 				m_credentials.reset(new credentials{ user,pass });
 				credentials *pCred = m_credentials.get();
@@ -45,7 +46,6 @@ namespace info {
 				assert(pConfig != nullptr);
 				pConfig->set_credentials(*pCred);
 				m_client.reset(new http_client{ sx,*pConfig });
-				m_url = sx;
 			}
 			else {
 				m_client.reset(new http_client{ (const string_t &)sUrl });

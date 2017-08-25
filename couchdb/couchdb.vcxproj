@@ -72,19 +72,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\infohttp;..\InfoBaseData;$(IncludePath)</IncludePath>
+    <IncludePath>..\InfoBaseData;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\infohttp;..\InfoBaseData;$(IncludePath)</IncludePath>
+    <IncludePath>..\InfoBaseData;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\infohttp;..\InfoBaseData;$(IncludePath)</IncludePath>
+    <IncludePath>..\InfoBaseData;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\infohttp;..\InfoBaseData;$(IncludePath)</IncludePath>
+    <IncludePath>..\InfoBaseData;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -164,6 +164,7 @@
     <ClInclude Include="index_response.h" />
     <ClInclude Include="query_filter.h" />
     <ClInclude Include="server_info.h" />
+    <ClInclude Include="sigletype_doc.h" />
     <ClInclude Include="update_response.h" />
   </ItemGroup>
   <ItemGroup>
@@ -173,6 +174,7 @@
     <ClCompile Include="index_response.cpp" />
     <ClCompile Include="query_filter.cpp" />
     <ClCompile Include="server_info.cpp" />
+    <ClCompile Include="sigletype_doc.cpp" />
     <ClCompile Include="update_response.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
