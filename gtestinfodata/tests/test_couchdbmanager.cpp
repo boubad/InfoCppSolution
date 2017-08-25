@@ -278,6 +278,16 @@ TEST_F(CouchDBManagerTest,Attachments)
     string_t attname = blob.name();
     update_response rsp = pMan->update_document_attachment_async(doc, blob).get();
     ASSERT_TRUE(rsp.ok());
+    doc = pMan->get_document_by_id_async(sid).get();
+    std::vector<attachment_info> vec {};
+    size_t nu = doc.attachments(vec);
+    ASSERT_TRUE(nu > 0);
+    for (auto p : vec) {
+        string_t xu = p.url();
+        ASSERT_TRUE(!xu.empty());
+        string_t xc = p.content_type();
+        ASSERT_TRUE(!xc.empty());
+    }//p
     std::shared_ptr<blob_data> bb = pMan->read_document_attachment_async(doc, attname).get();
     blob_data *pb = bb.get();
     ASSERT_TRUE(pb != nullptr);

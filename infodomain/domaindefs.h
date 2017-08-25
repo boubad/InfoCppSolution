@@ -7,7 +7,11 @@
 #ifdef _MSC_VER
 #include <optional>
 #else
+#if __GNUC__ > 6
+#include <optional>
+#else
 #include <boost/optional.hpp>
+#endif
 #endif // _MSC_VER
 //////////////////////////////////
 namespace info {
@@ -17,8 +21,13 @@ namespace info {
 		using std::optional;
 #define INFO_OPTIONAL_HAS_VALUE(x) ((x).has_value())
 #else
+#if __GNUC__ > 6
+        using std::optional;
+#define INFO_OPTIONAL_HAS_VALUE(x) ((x).has_value())
+#else
 		using boost::optional;
 #define INFO_OPTIONAL_HAS_VALUE(x) ((bool)(x))
+#endif
 #endif // _MSC_VER
 		//////////////////////////////////////
 		using nullable_int = std::optional<int>;

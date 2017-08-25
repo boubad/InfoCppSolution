@@ -16,8 +16,13 @@
 #include <any>
 #define INFO_ANY_HAS_VALUE(x) ((x).has_value())
 #else
+#if __GNUC__ > 6
+#include <any>
+#define INFO_ANY_HAS_VALUE(x) ((x).has_value())
+#else
 #include <boost/any.hpp>
 #define INFO_ANY_HAS_VALUE(x) ((!(x).empty()))
+#endif
 #endif // _MSC_VER
 ////////////////////////////////
 namespace info {
@@ -41,8 +46,13 @@ namespace info {
 #define ucerr  std::wcerr
 #endif //_TURN_OFF_PLATFORM_STRING
 #else
+#if __GNUC__ > 6
+    using any = std::any;
+#define INFO_ANY_CAST  std::any_cast
+#else
 	using any = boost::any;
 #define INFO_ANY_CAST  boost::any_cast
+#endif
 #ifndef _TURN_OFF_PLATFORM_STRING
 #define _XPLATSTR(x) x
 	using char_t = char;
