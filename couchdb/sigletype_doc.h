@@ -11,26 +11,28 @@ namespace info {
         //////////////////////////////
         class couchdb_manager;
         /////////////////////////////
-        class keytype_doc : public couchdb_doc {
+        class type_doc : public couchdb_doc {
         public:
             static const string_t KEY_TYPE;
-            static const string_t KEY_SIGLE;
         public:
-            keytype_doc();
-            keytype_doc(const any &va);
-            keytype_doc(const keytype_doc &other);
-            keytype_doc & operator=(const keytype_doc &other);
-            virtual ~keytype_doc();
+            type_doc();
+            type_doc(const any &va);
+            type_doc(const type_doc &other);
+            type_doc & operator=(const type_doc &other);
+            virtual ~type_doc();
         protected:
             void type(const string_t &s);
-            virtual void unique_properties(std::vector<string_t> &vec) const;
+            virtual void unique_properties(std::vector<std::vector<string_t>> &vvec) const;
         public:
             string_t type(void) const;
-            any key(void) const;
-            void key(const any &as);
+			virtual bool is_storable(void) const;
         public:
-            std::future<bool> load(couchdb_manager &oMan);
-            std::future<bool> save(couchdb_manager &oMan);
+			bool load_by_id(couchdb_manager &oMan, couchdb_doc &doc) const;
+			bool load_unique(couchdb_manager &oMan, couchdb_doc &doc) const;
+			//
+            virtual std::future<bool> load(couchdb_manager &oMan);
+            virtual std::future<bool> save(couchdb_manager &oMan);
+			virtual std::future<bool> remove(couchdb_manager &oMan);
         };// class sigletype_doc
         /////////////////////////////
     }// namespce couchdb
