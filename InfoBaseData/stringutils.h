@@ -23,6 +23,7 @@ namespace info {
 		static size_t split_tokens(const string_t &s, std::vector<string_t> &vec);
 		static size_t split_vector(const string_t &s, std::vector<string_t> &vec,
 			const string_t &delim = U(";,\t "), bool bCheck = true);
+        static string_t url_encode(const string_t &s);
 	};
 }// namespace info
 #endif // STRINGUTILS_H__

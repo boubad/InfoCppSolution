@@ -1,12 +1,12 @@
 #include "couchdb_manager.h"
 #include <stringutils.h>
-#include <http_utils.h>
 #include "query_filter.h"
 #include "server_info.h"
 ////////////////////////////
+#include <limits>
+////////////////////////////
 namespace info {
 	namespace couchdb {
-		using namespace info::http;
 		////////////////////////////////
 		static const string_t STRING_SLASH(U("/"));
 		static const string_t URI_ALL_DBS(U("/_all_dbs"));
@@ -88,7 +88,7 @@ namespace info {
 		string_t couchdb_manager::form_attachment_url(const string_t &docid, const string_t &name) {
 			string_t sx = (const string_t &)m_client.get_serverurl();
 			string_t s0 = sx + STRING_SLASH;
-			s0 += this->m_dbname + STRING_SLASH + url_encode(docid) + STRING_SLASH + url_encode(name);
+			s0 += this->m_dbname + STRING_SLASH + stringutils::url_encode(docid) + STRING_SLASH + stringutils::url_encode(name);
 			return (s0);
 		}//form_attachment_url
 		void couchdb_manager::check_attachments_url(couchdb_doc &doc) {
@@ -342,7 +342,7 @@ namespace info {
 				update_response bRet{};
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
-				suri += STRING_SLASH + url_encode(sid);
+				suri += STRING_SLASH + stringutils::url_encode(sid);
 				query_params query{};
 				query.push_back(std::make_pair(QUERY_REV, srev));
 				dataserviceuri uri{ suri };
@@ -368,7 +368,7 @@ namespace info {
 				string_t bRet{};
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
-				suri += STRING_SLASH + url_encode(sid);
+				suri += STRING_SLASH + stringutils::url_encode(sid);
 				dataserviceuri uri{ suri };
 				info_response_ptr rsp = m_client.head(uri).get();
 				info_response *pRsp = rsp.get();
@@ -434,7 +434,7 @@ namespace info {
 				couchdb_doc bRet{};
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
-				suri += STRING_SLASH + url_encode(*si);
+				suri += STRING_SLASH + stringutils::url_encode(*si);
 				dataserviceuri uri{ suri };
 				query_params query{};
 				if (bAttach) {
@@ -466,7 +466,7 @@ namespace info {
 				update_response bRet{};
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
-				suri += STRING_SLASH + url_encode(sid);
+				suri += STRING_SLASH + stringutils::url_encode(sid);
 				query_params query{};
 				query.push_back(std::make_pair(QUERY_REV, srev));
 				dataserviceuri uri{ suri };
@@ -493,7 +493,7 @@ namespace info {
 				oFilter.clear_sort();
 				oFilter.clear_projection();
 				oFilter.set_skip(0);
-				oFilter.set_limit(INT_MAX);
+				oFilter.set_limit(std::numeric_limits<int>::max());
 				oFilter.add_projection_field(couchdb_doc::KEY_ID);
 				int bRet{-1};
 				string_t suri{ STRING_SLASH };
@@ -607,7 +607,7 @@ namespace info {
 				}
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
-				suri += STRING_SLASH + url_encode(pf->id()) + STRING_SLASH + url_encode(*xname);
+				suri += STRING_SLASH + stringutils::url_encode(pf->id()) + STRING_SLASH + stringutils::url_encode(*xname);
 				dataserviceuri uri{ suri };
 				std::shared_ptr<blob_data> oRet = m_client.read_blob(uri).get();
 				if (oRet.get() != nullptr) {
@@ -639,7 +639,7 @@ namespace info {
 				pv->version(srev);
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
-				suri += STRING_SLASH + url_encode(docid) + STRING_SLASH + url_encode(pv->name());
+				suri += STRING_SLASH + stringutils::url_encode(docid) + STRING_SLASH + stringutils::url_encode(pv->name());
 				dataserviceuri uri{ suri };
 				query_params query{};
 				query.push_back(std::make_pair(QUERY_REV, srev));
@@ -673,7 +673,7 @@ namespace info {
 				}
 				string_t suri{ STRING_SLASH };
 				suri += this->m_dbname;
-				suri += STRING_SLASH + url_encode(pf->id()) + STRING_SLASH + url_encode(*xname);
+				suri += STRING_SLASH + stringutils::url_encode(pf->id()) + STRING_SLASH + stringutils::url_encode(*xname);
 				dataserviceuri uri{ suri };
 				query_params query{};
 				query.push_back(std::make_pair(QUERY_REV, srev));

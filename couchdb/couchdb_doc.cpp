@@ -1,5 +1,5 @@
 #include "couchdb_doc.h"
-#include <http_utils.h>
+#include <stringutils.h>
 /////////////////////////////
 namespace info {
 	namespace couchdb {
@@ -88,7 +88,7 @@ namespace info {
 		void couchdb_doc::update_attachments_urls(const string_t sbase) {
 			infomap oMap{};
 			if (get_obj_property(KEY_ATTACHMENTS, oMap)) {
-				string_t sid = sbase + U("/") +  info::http::url_encode(this->id()) + U("/");
+				string_t sid = sbase + U("/") +  stringutils::url_encode(this->id()) + U("/");
 				infomap xMap{};
 				for (auto it = oMap.begin(); it != oMap.end(); ++it) {
 					any a = (*it).second;
@@ -96,7 +96,7 @@ namespace info {
 					if (a.type() == typeid(infomap)) {
 						infomap mx = INFO_ANY_CAST<infomap>(a);
 						mx[attachment_info::KEY_NAME] = any{ key };
-						string_t sz = sid + info::http::url_encode(key);
+						string_t sz = sid + stringutils::url_encode(key);
 						mx[attachment_info::KEY_URL] = any{ sz };
 						a = any{ mx };
 					}

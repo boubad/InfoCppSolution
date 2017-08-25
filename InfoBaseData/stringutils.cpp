@@ -1,7 +1,10 @@
 #include "stringutils.h"
+////////////////////////
+#include <cctype>
+#include <iomanip>
+#include <sstream>
 ///////////////////
 #if defined(_MSC_VER)
-#include <cctype>
 #include <algorithm>
 #include <locale>
 #else
@@ -30,6 +33,25 @@ namespace info {
 	static const string_t STRING_NAN1(U("n/a"));
 	static const string_t STRING_NAN2(U("na"));
 	static const string_t STRING_NAN3(U("nan"));
+    /////////////////////////////////////////
+    string_t stringutils::url_encode(const string_t &s){
+    ostringstream_t escaped{};
+    escaped.fill(U('0'));
+    escaped << std::hex;
+    for (auto i = s.begin(); i != s.end(); ++i) {
+        string_t::value_type c = *i;
+        // Keep alphanumeric and other accepted characters intact
+        if (std::isalnum(c) || c == U('-') || c == U('_') || c == U('.') || c == U('~')) {
+            escaped << c;
+            continue;
+        }
+        // Any other characters are percent-encoded
+        escaped << std::uppercase;
+        escaped << U('%') << std::setw(2) << int((unsigned char) c);
+        escaped << std::nouppercase;
+    }
+    return escaped.str();
+    }// url_encode
 	////////////////////////////////////////
 	bool stringutils::info_read_any_value(const string_t &sx, any &v) {
 		v = any{};
