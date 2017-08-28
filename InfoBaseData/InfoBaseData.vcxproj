@@ -158,19 +158,23 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="base_importer.h" />
     <ClInclude Include="blob_data.h" />
     <ClInclude Include="http_client.h" />
     <ClInclude Include="infobaseobject.h" />
     <ClInclude Include="InfoDefs.h" />
+    <ClInclude Include="info_fielddesc.h" />
     <ClInclude Include="info_response.h" />
     <ClInclude Include="info_utils.h" />
     <ClInclude Include="stringutils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="base_importer.cpp" />
     <ClCompile Include="blob_data.cpp" />
     <ClCompile Include="http_client.cpp" />
     <ClCompile Include="infobaseobject.cpp" />
     <ClCompile Include="InfoDefs.cpp" />
+    <ClCompile Include="info_fielddesc.cpp" />
     <ClCompile Include="info_response.cpp" />
     <ClCompile Include="stringutils.cpp" />
   </ItemGroup>

@@ -23,6 +23,9 @@ namespace info {
 		info_baseitem::~info_baseitem()
 		{
 		}
+		const std::set<info_fielddesc>  info_baseitem::get_descs(void) const {
+			return std::set<info_fielddesc>{};
+		}
 		info_status info_baseitem::status(void) const {
 			int n{ 0 };
 			if (get_int_property(KEY_STATUS, n)) {

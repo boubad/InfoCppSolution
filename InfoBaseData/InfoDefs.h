@@ -14,14 +14,20 @@
 //////////////////////////////////
 #if defined(_MSC_VER)
 #include <any>
+#include <optional>
 #define INFO_ANY_HAS_VALUE(x) ((x).has_value())
+#define INFO_OPTIONAL_HAS_VALUE(x) ((x).has_value())
 #else
 #if __GNUC__ > 6
 #include <any>
+#include <optional>
 #define INFO_ANY_HAS_VALUE(x) ((x).has_value())
+#define INFO_OPTIONAL_HAS_VALUE(x) ((x).has_value())
 #else
 #include <boost/any.hpp>
+#include <boost/optional.hpp>
 #define INFO_ANY_HAS_VALUE(x) ((!(x).empty()))
+#define INFO_OPTIONAL_HAS_VALUE(x) ((bool)(x))
 #endif
 #endif // _MSC_VER
 ////////////////////////////////
@@ -29,6 +35,7 @@ namespace info {
 	//////////////////////
 #if defined(_MSC_VER)
 	using any = std::any;
+	using std::optional;
 #define INFO_ANY_CAST  std::any_cast
 #ifndef _TURN_OFF_PLATFORM_STRING
 #define _XPLATSTR(x) L ## x
@@ -48,9 +55,11 @@ namespace info {
 #else
 #if __GNUC__ > 6
     using any = std::any;
+	using std::optional;
 #define INFO_ANY_CAST  std::any_cast
 #else
 	using any = boost::any;
+	using boost::optional;
 #define INFO_ANY_CAST  boost::any_cast
 #endif
 #ifndef _TURN_OFF_PLATFORM_STRING
@@ -73,6 +82,12 @@ namespace info {
 #ifndef _TURN_OFF_PLATFORM_STRING
 #define U(x) _XPLATSTR(x)
 #endif // !_TURN_OFF_PLATFORM_STRING
+	///////////////////////////////////
+	using nullable_int = optional<int>;
+	using nullable_double = optional<double>;
+	using nullable_bool = optional<bool>;
+	using nullable_string = optional<string_t>;
+	using nullable_any = optional<any>;
 	/////////////////////////////////
 	extern string_t string_to_stringt(const std::string &s);
 	extern std::string stringt_to_string(const string_t &s);
@@ -97,6 +112,74 @@ namespace info {
 		virtual const char* what() const noexcept;
 	}; //class info_exception
 	using query_params = std::vector<std::pair<string_t, string_t>>;
+	//////////////////////////////
+	enum class info_resulttype : int {
+		unkown = 0, val = 1, valc = 2,
+		ajac = 4, nar = 8, misc = 16
+	};
+	enum class info_status
+		: int {
+		unknown = 0,
+		persisted = 1,
+		tail = 2,
+		disabled = 4,
+		inserted = 8,
+		updated = 16,
+		deleted = 32,
+		info = 64,
+		normal = 128
+	};
+	enum class info_datatype
+		: int {
+		unknown = 0,
+		real = 1,
+		integer = 2,
+		text = 4,
+		boolean = 8,
+		date = 16,
+		datetime = 32,
+		enumtype = 64,
+		normal = 128,
+		other = 256,
+		status = 512,
+		kind = 1024,
+		datatype = 2048,
+		any = 4096,
+		vector = 8192,
+		result = 16384
+	};
+	enum class info_kindtype
+		: int {
+		unknown = 0, normal = 1, info = 2, modal = 4, ordinal = 8
+	};
+	enum class info_filteroptype
+	{
+		ignore = 0,
+		exists = 1,
+		notexists = 2,
+		equals = 4,
+		notequals = 8,
+		less = 16,
+		lessequals = 32,
+		greater = 64,
+		greaterequals = 128,
+		like = 256
+	};
+	enum class info_storeoptype
+		: int {
+		unknown = 0,
+		findonedoc = 1,
+		insertonedoc = 2,
+		replaceonedoc = 4,
+		maintainsonedoc = 8,
+		deleteonedoc = 16,
+		deletemanydocs = 32,
+		maintainsmanydocs = 64,
+		querydocscount = 128,
+		querydocs = 256,
+		fetchdistinct = 512,
+		checkindex = 1024
+	};
 ///////////////////////////////
 }// namespace info
 /////////////////////////////

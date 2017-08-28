@@ -33,25 +33,146 @@ namespace info {
 	static const string_t STRING_NAN1(U("n/a"));
 	static const string_t STRING_NAN2(U("na"));
 	static const string_t STRING_NAN3(U("nan"));
-    /////////////////////////////////////////
-    string_t stringutils::url_encode(const string_t &s){
-    ostringstream_t escaped{};
-    escaped.fill(U('0'));
-    escaped << std::hex;
-    for (auto i = s.begin(); i != s.end(); ++i) {
-        string_t::value_type c = *i;
-        // Keep alphanumeric and other accepted characters intact
-        if (std::isalnum(c) || c == U('-') || c == U('_') || c == U('.') || c == U('~')) {
-            escaped << c;
-            continue;
-        }
-        // Any other characters are percent-encoded
-        escaped << std::uppercase;
-        escaped << U('%') << std::setw(2) << int((unsigned char) c);
-        escaped << std::nouppercase;
-    }
-    return escaped.str();
-    }// url_encode
+	////////////////////////////////////////////
+	bool stringutils::get_num_value(const any &v, double &dRet) {
+		dRet = 0;
+		if (!INFO_ANY_HAS_VALUE(v)) {
+			return (false);
+		}
+		if (v.type() == typeid(double)) {
+			dRet = INFO_ANY_CAST<double>(v);
+			return (true);
+		}
+		else if (v.type() == typeid(float)) {
+			dRet = static_cast<double>(INFO_ANY_CAST<float>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(int)) {
+			dRet = static_cast<double>(INFO_ANY_CAST<int>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(unsigned int)) {
+			dRet = static_cast<double>(INFO_ANY_CAST<unsigned int>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(long)) {
+			dRet = static_cast<double>(INFO_ANY_CAST<long>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(unsigned long)) {
+			dRet = static_cast<double>(INFO_ANY_CAST<unsigned long>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(char)) {
+			dRet = static_cast<double>(INFO_ANY_CAST<char>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(unsigned char)) {
+			dRet = static_cast<double>(INFO_ANY_CAST<unsigned char>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(wchar_t)) {
+			dRet = static_cast<double>(INFO_ANY_CAST<wchar_t>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(bool)) {
+			bool b = INFO_ANY_CAST<bool>(v);
+			dRet = (b) ? 1.0 : 0.0;
+			return (true);
+		}
+		else if (v.type() == typeid(string_t)) {
+			string_t s = trim(INFO_ANY_CAST<string_t>(v));
+			if (!s.empty()) {
+				try {
+					size_t cur{ 0 };
+					dRet = std::stod(s, &cur);
+					return (true);
+				}
+				catch (std::exception & /* ex*/) {
+				}
+			}
+		}
+		return (false);
+	}//get_num_value
+	bool stringutils::get_num_value(const any &v, int &dRet) {
+		dRet = 0;
+		if (!INFO_ANY_HAS_VALUE(v)) {
+			return (false);
+		}
+		if (v.type() == typeid(int)) {
+			dRet = INFO_ANY_CAST<int>(v);
+			return (true);
+		}
+		else if (v.type() == typeid(double)) {
+			dRet = static_cast<int>(INFO_ANY_CAST<double>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(float)) {
+			dRet = static_cast<int>(INFO_ANY_CAST<float>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(unsigned int)) {
+			dRet = static_cast<int>(INFO_ANY_CAST<unsigned int>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(long)) {
+			dRet = static_cast<int>(INFO_ANY_CAST<long>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(unsigned long)) {
+			dRet = static_cast<int>(INFO_ANY_CAST<unsigned long>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(char)) {
+			dRet = static_cast<int>(INFO_ANY_CAST<char>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(unsigned char)) {
+			dRet = static_cast<int>(INFO_ANY_CAST<unsigned char>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(wchar_t)) {
+			dRet = static_cast<int>(INFO_ANY_CAST<wchar_t>(v));
+			return (true);
+		}
+		else if (v.type() == typeid(bool)) {
+			bool b = INFO_ANY_CAST<bool>(v);
+			dRet = (b) ? 1 : 0;
+			return (true);
+		}
+		else if (v.type() == typeid(string_t)) {
+			string_t s = trim(INFO_ANY_CAST<string_t>(v));
+			if (!s.empty()) {
+				try {
+					size_t cur{ 0 };
+					dRet = std::stoi(s, &cur);
+					return (true);
+				}
+				catch (std::exception & /* ex*/) {
+				}
+			}
+		}
+		return (false);
+	}//get_num_value
+	/////////////////////////////////////////
+	string_t stringutils::url_encode(const string_t &s) {
+		ostringstream_t escaped{};
+		escaped.fill(U('0'));
+		escaped << std::hex;
+		for (auto i = s.begin(); i != s.end(); ++i) {
+			string_t::value_type c = *i;
+			// Keep alphanumeric and other accepted characters intact
+			if (std::isalnum(c) || c == U('-') || c == U('_') || c == U('.') || c == U('~')) {
+				escaped << c;
+				continue;
+			}
+			// Any other characters are percent-encoded
+			escaped << std::uppercase;
+			escaped << U('%') << std::setw(2) << int((unsigned char)c);
+			escaped << std::nouppercase;
+		}
+		return escaped.str();
+	}// url_encode
 	////////////////////////////////////////
 	bool stringutils::info_read_any_value(const string_t &sx, any &v) {
 		v = any{};

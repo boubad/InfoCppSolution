@@ -4,6 +4,7 @@
 //////////////////////////
 #include "info_baseitem.h"
 #include "etud_strings.h"
+#include <blob_data.h>
 ////////////////////////////
 namespace info {
 	namespace domain {
@@ -16,6 +17,7 @@ namespace info {
 			void check_fullname(void);
 		protected:
 			virtual void post_init(void) override;
+			void avatar(const string_t &s);
 			virtual void unique_properties(std::vector<std::vector<string_t>> &vvec) const override;
 		public:
 			info_etudiant();
@@ -24,6 +26,10 @@ namespace info {
 			info_etudiant & operator=(const info_etudiant &other);
 			virtual ~info_etudiant();
 			bool operator==(const info_etudiant &other) const;
+			bool operator<(const info_etudiant &other) const;
+			virtual const std::set<info_fielddesc>  get_descs(void) const override;
+			string_t avatar_url(void) const;
+			bool has_avatar_url(void) const;
 		public:
 			nullable_int apb(void) const;
 			void apb(int n);
@@ -61,15 +67,12 @@ namespace info {
 			nullable_string redoublant(void) const;
 			void redoublant(const string_t &s);
 			nullable_string avatar(void) const;
-			void avatar(const string_t &s);
 			nullable_string email(void) const;
 			void email(const string_t &s);
 			nullable_string  phone(void) const;
 			void phone(const string_t &s);
 			optional<std::vector<string_t>> datasets_sigles(void) const;
 			void datasets_sigles(const std::vector<string_t> &vec);
-		public:
-			virtual bool is_storable(void) const override;
 		public:
 			note_t  ue11(void) const;
 			void ue11(double n);
@@ -137,6 +140,16 @@ namespace info {
 			nullable_string rem_s4(void) const;
 			void rem_s4(const string_t &s);
 			//
+			///////////////////////////////
+			std::future<bool> set_avatar_blob(info::couchdb::couchdb_manager &oMan,const blob_data &blob);
+			static std::future<int> get_count_async(info::couchdb::couchdb_manager &oMan,
+				const info::couchdb::query_filter &filter = info::couchdb::query_filter{});
+			static std::future<std::vector<info_etudiant> > get_async(info::couchdb::couchdb_manager &oMan,
+				const info::couchdb::query_filter &filter = info::couchdb::query_filter{});
+			static std::future<std::vector<bool>> maintains_async(const std::vector<info_etudiant> &ovec,
+				info::couchdb::couchdb_manager &oMan);
+			static std::future<bool> check_indexes_async(info::couchdb::couchdb_manager &oMan);
+			////////////////////////////////
 		}; // class info_etudiant
 		   ///////////////////////////
 		using etudiant_ptr = std::shared_ptr<info_etudiant>;

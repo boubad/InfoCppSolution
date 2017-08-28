@@ -14,6 +14,8 @@ namespace info {
 		stringutils(const stringutils &other) = delete;
 		stringutils & operator=(const stringutils &other) = delete;
 	public:
+		static bool get_num_value(const any &v, double &dRet);
+		static bool get_num_value(const any &v, int &dRet);
 		static bool info_read_any_value(const string_t &sx, any &v);
 		static string_t any_to_stringt(const any &v);
 		static void check_string(string_t &s);

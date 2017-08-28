@@ -2,8 +2,6 @@
 #ifndef DOMAINSTRINGS_H__
 #define DOMAINSTRINGS_H__
 ///////////////////////////
-#include "domaindefs.h"
-/////////////////////////////
 #include <stringutils.h>
 //////////////////////////////
 namespace info {

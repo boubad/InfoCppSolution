@@ -158,14 +158,15 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="domaindefs.h" />
     <ClInclude Include="domainstrings.h" />
+    <ClInclude Include="etud_importer.h" />
     <ClInclude Include="etud_strings.h" />
     <ClInclude Include="info_baseitem.h" />
     <ClInclude Include="info_etudiant.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="domainstrings.cpp" />
+    <ClCompile Include="etud_importer.cpp" />
     <ClCompile Include="etud_strings.cpp" />
     <ClCompile Include="info_baseitem.cpp" />
     <ClCompile Include="info_etudiant.cpp" />

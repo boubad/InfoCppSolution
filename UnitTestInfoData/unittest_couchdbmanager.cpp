@@ -6,6 +6,8 @@
 #include <couchdb_manager.h>
 #include <server_info.h>
 #include <update_response.h>
+#include <etud_importer.h>
+#include <info_etudiant.h>
 /////////////////////////////
 //
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -15,6 +17,7 @@ namespace UnitTestInfoData
 	using namespace info;
 	using namespace info::http;
 	using namespace info::couchdb;
+	using namespace info::domain;
 	///////////////////////////
 	TEST_CLASS(CouchDBManagerTest)
 	{
@@ -210,7 +213,7 @@ namespace UnitTestInfoData
 				Assert::IsTrue(b);
 			}
 			string_t field(U("ival"));
-			index_response rsp = pMan->create_index_async(dbname, field).get();
+			index_response rsp = pMan->create_index_async(field).get();
 			if (rsp.ok()) {
 				string_t sid = rsp.index_id();
 				Assert::IsFalse(sid.empty());
@@ -220,6 +223,19 @@ namespace UnitTestInfoData
 				Assert::IsFalse(srev2.empty());
 			}
 		}//CouchDBManager_CreateIndex
+		TEST_METHOD(CouchDBManager_EtudsIndex)
+		{
+			couchdb_manager *pMan = m_man.get();
+			Assert::IsNotNull(pMan);
+			string_t dbname = m_dbname;
+			bool b = pMan->exists_database_async(dbname).get();
+			if (!b) {
+				b = pMan->create_database_async(dbname).get();
+				Assert::IsTrue(b);
+			}
+			bool bRet = info_etudiant::check_indexes_async(*pMan).get();
+			Assert::IsTrue(bRet);
+		}//CouchDBManager_EtudsIndex
 		TEST_METHOD(CouchDBManager_MaintainsDocs)
 		{
 			couchdb_manager *pMan = m_man.get();
@@ -320,6 +336,114 @@ namespace UnitTestInfoData
 			blob_data *pb2 = bb2.get();
 			Assert::IsFalse(pb2->ok());
 		}// CouchDBManager_Attachment
+		TEST_METHOD(CouchDBManager_ImportEtuds)
+		{
+			string_t filename(U("D:\\testdata\\Etuds_S4.csv"));
+			etud_importer oImport{ filename };
+			bool b = oImport.import();
+			Assert::IsTrue(b);
+			std::vector<any> vv = oImport.get_items();
+			Assert::IsFalse(vv.empty());
+		}//CouchDBManager_CreateIndex
+		TEST_METHOD(CouchDBManager_QueryFilter)
+		{
+			query_filter filter{};
+			int nPageSize{ 10 };
+			filter.set_limit(nPageSize);
+			filter.add_sort(info_etudiant::KEY_FULLNAME);
+			filter.add_equals(info_etudiant::KEY_TYPE, any{ info_etudiant::TYPE_ETUD });
+			string_t ss = filter.toString();
+			Assert::IsFalse(ss.empty());
+			Logger::WriteMessage(ss.c_str());
+		}//CouchDBManager_QueryFilter
+		TEST_METHOD(CouchDBManager_SaveImportEtuds)
+		{
+			string_t filename(U("D:\\testdata\\Etuds_S4.csv"));
+			etud_importer oImport{ filename };
+			bool b = oImport.import();
+			Assert::IsTrue(b);
+			std::vector<any> vv = oImport.get_items();
+			Assert::IsFalse(vv.empty());
+			//
+			couchdb_manager *pMan = m_man.get();
+			Assert::IsNotNull(pMan);
+			string_t dbname = m_dbname;
+			b = pMan->exists_database_async(dbname).get();
+			if (!b) {
+				b = pMan->create_database_async(dbname).get();
+				Assert::IsTrue(b);
+			}
+			string_t field(info_etudiant::KEY_FULLNAME);
+			index_response rsp = pMan->create_index_async(field).get();
+			Assert::IsTrue(rsp.ok());
+			std::vector<info_etudiant> etuds{};
+			for (auto va : vv) {
+				info_etudiant oEtud{ va };
+				b = oEtud.load(*pMan).get();
+				if (!b) {
+					b = oEtud.save(*pMan).get();
+					Assert::IsTrue(b);
+				}
+				etuds.push_back(oEtud);
+			}// va
+			query_filter filter{};
+			int nPageSize{ 10 };
+			filter.set_limit(nPageSize);
+			filter.add_sort(info_etudiant::KEY_FULLNAME);
+		//	filter.add_projection_field(info_etudiant::KEY_FULLNAME);
+		//	filter.add_projection_field(info_etudiant::KEY_DOSSIER);
+		//	filter.add_projection_field(info_etudiant::KEY_VERSION);
+			int nTotal = info_etudiant::get_count_async(*pMan,filter).get();
+			int nOffset{ 0 };
+			while (nOffset < nTotal) {
+				filter.set_skip(nOffset);
+				std::vector<info_etudiant> xx = info_etudiant::get_async(*pMan, filter).get();
+				int nx = static_cast<int>(xx.size());
+				nOffset += nx;
+				for (auto x : xx) {
+					string_t s = x.toString();
+					Logger::WriteMessage(s.c_str());
+				}// x
+				if (nx < nPageSize) {
+					break;
+				}
+			}// nOffset
+		}//CouchDBManager_CreateIndex
+		TEST_METHOD(CouchDBManager_ReadEtuds)
+		{
+			couchdb_manager *pMan = m_man.get();
+			Assert::IsNotNull(pMan);
+			string_t dbname = m_dbname;
+			bool b = pMan->exists_database_async(dbname).get();
+			if (!b) {
+				b = pMan->create_database_async(dbname).get();
+				Assert::IsTrue(b);
+			}
+			query_filter filter{};
+			int nPageSize{ 10 };
+			filter.set_limit(nPageSize);
+			
+		    filter.add_projection_field(info_etudiant::KEY_FULLNAME);
+			filter.add_projection_field(info_etudiant::KEY_FIRSTNAME);
+			filter.add_projection_field(info_etudiant::KEY_LASTNAME);
+			//filter.add_sort(info_etudiant::KEY_LASTNAME);
+			filter.add_sort(info_etudiant::KEY_FIRSTNAME);
+			int nTotal = info_etudiant::get_count_async(*pMan, filter).get();
+			int nOffset{ 0 };
+			while (nOffset < nTotal) {
+				filter.set_skip(nOffset);
+				std::vector<info_etudiant> xx = info_etudiant::get_async(*pMan, filter).get();
+				int nx = static_cast<int>(xx.size());
+				nOffset += nx;
+				for (auto x : xx) {
+					string_t s = x.toString();
+					Logger::WriteMessage(s.c_str());
+				}// x
+				if (nx < nPageSize) {
+					break;
+				}
+			}// nOffset
+		}//CouchDBManager_ReadEtuds
 	};
 	////////////////////////////
 	std::vector<couchdb_doc> CouchDBManagerTest::st_m_docs;

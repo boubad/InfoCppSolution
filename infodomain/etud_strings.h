@@ -2,7 +2,7 @@
 #ifndef ETUD_STRINGS_H__
 #define ETUD_STRINGS_H__
 /////////////////////////////
-#include "domaindefs.h"
+#include <InfoDefs.h>
 ////////////////////////////
 namespace info {
 	namespace domain {

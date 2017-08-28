@@ -1,8 +1,12 @@
 #include "info_etudiant.h"
+/////////////////////////////
 #include <stringutils.h>
+#include <couchdb_manager.h>
 ////////////////////////
 namespace info {
 	namespace domain {
+		//////////////////////////////
+		using namespace info::couchdb;
 		///////////////////////////////
 		void info_etudiant::check_type(void) {
 			type(TYPE_ETUD);
@@ -72,40 +76,78 @@ namespace info {
 		info_etudiant::~info_etudiant() {
 
 		}
-		bool info_etudiant::operator==(const info_etudiant &other) const {
-			nullable_string s1 = dossier();
-			nullable_string s2 = other.dossier();
-			if (INFO_OPTIONAL_HAS_VALUE(s1) && INFO_OPTIONAL_HAS_VALUE(s2))
-			{
-				return (*s1 == *s2);
+		bool info_etudiant::operator<(const info_etudiant &other) const {
+			string_t s1{}, s2{};
+			get_string_property(KEY_LASTNAME, s1);
+			other.get_string_property(KEY_LASTNAME, s2);
+			if (s1 < s2) {
+				return (true);
 			}
-			//
-			s1 = username();
-			s2 = other.username();
-			if (INFO_OPTIONAL_HAS_VALUE(s1) && INFO_OPTIONAL_HAS_VALUE(s2)) {
-				return (*s1 == *s2);
+			else if (s1 > s2) {
+				return (false);
 			}
-			//
-			s1 = email();
-			s2 = other.email();
-			if (INFO_OPTIONAL_HAS_VALUE(s1) && INFO_OPTIONAL_HAS_VALUE(s2)) {
-				return (*s1 == *s2);
+			s1.clear();
+			s2.clear();
+			get_string_property(KEY_FIRSTNAME, s1);
+			other.get_string_property(KEY_FIRSTNAME, s2);
+			if (s1 < s2) {
+				return (true);
 			}
-			//
-			s1 = lastname();
-			s2 = other.lastname();
-			nullable_string p1 = firstname();
-			nullable_string p2 = other.firstname();
-			nullable_int sa1 = birthdate();
-			nullable_int sa2 = other.birthdate();
-			if (INFO_OPTIONAL_HAS_VALUE(s1) && INFO_OPTIONAL_HAS_VALUE(s2) &&
-				INFO_OPTIONAL_HAS_VALUE(p1) && INFO_OPTIONAL_HAS_VALUE(p2) &&
-				INFO_OPTIONAL_HAS_VALUE(sa1) && INFO_OPTIONAL_HAS_VALUE(sa2)) {
-				return (*s1 == *s2) && (*p1 == *p2) && (*sa1 == *sa2);
+			else if (s1 > s2) {
+				return (false);
+			}
+			int n1{ 0 }, n2{ 0 };
+			get_int_property(KEY_BIRTHDATE, n1);
+			other.get_int_property(KEY_BIRTHDATE, n2);
+			if (n2 > n1) {
+				return (true);
+			}
+			else if (n2 < n1) {
+				return (false);
 			}
 			return (false);
+		}// operator<
+		bool info_etudiant::operator==(const info_etudiant &other) const {
+			string_t s1{}, s2{};
+			get_string_property(KEY_LASTNAME, s1);
+			other.get_string_property(KEY_LASTNAME, s2);
+			if (s1 != s2) {
+				return (false);
+			}
+			s1.clear();
+			s2.clear();
+			get_string_property(KEY_FIRSTNAME, s1);
+			other.get_string_property(KEY_FIRSTNAME, s2);
+			if (s1 != s2) {
+				return (false);
+			}
+			int n1{ 0 }, n2{ 0 };
+			get_int_property(KEY_BIRTHDATE, n1);
+			other.get_int_property(KEY_BIRTHDATE, n2);
+			return (n1 == n2);
 		}
-
+		string_t info_etudiant::avatar_url(void) const {
+			string_t sRet{};
+			nullable_string s0 = this->avatar();
+			if (!INFO_OPTIONAL_HAS_VALUE(s0)) {
+				return (sRet);
+			}
+			string_t s = *s0;
+			std::vector<attachment_info> vv{};
+			attachments(vv);
+			auto it = std::find_if(vv.begin(), vv.end(), [s](const attachment_info &p)->bool {
+				return (p.name() == s);
+			});
+			if (it != vv.end()) {
+				const attachment_info &att = *it;
+				sRet = att.url();
+			}
+			return (sRet);
+		}// avatar_url
+		bool info_etudiant::has_avatar_url(void) const {
+			string_t s = avatar_url();
+			return (!s.empty());
+		}
 		void info_etudiant::check_fullname(void) {
 			string_t s1{}, s2{};
 			get_string_property(KEY_LASTNAME, s1);
@@ -113,13 +155,6 @@ namespace info {
 			string_t ss = stringutils::trim(s1 + U(" ") + s2);
 			set_string_property(KEY_FULLNAME, ss);
 		}// check_fullname
-		bool info_etudiant::is_storable(void) const {
-			string_t s1{}, s2{}, s3{};
-			get_string_property(KEY_DOSSIER, s1);
-			get_string_property(KEY_USERNAME, s2);
-			get_string_property(KEY_EMAIL, s3);
-			return (!s1.empty()) || (!s2.empty()) || (!s3.empty());
-		}
 		nullable_int info_etudiant::annee(void) const {
 			int n{ 0 };
 			if (get_int_property(KEY_ANNEE, n)) {
@@ -582,7 +617,7 @@ namespace info {
 			}
 		}
 		void info_etudiant::rem_s1(const string_t &s) {
-			set_string_property(etud_strings::KEY_REMS1, s);
+			set_string_property(KEY_REMS1, s);
 		}
 		//
 		info_etudiant::note_t  info_etudiant::ue21(void) const {
@@ -714,7 +749,7 @@ namespace info {
 			}
 		}
 		void info_etudiant::rem_s2(const string_t &s) {
-			set_string_property(etud_strings::KEY_REMS2, s);
+			set_string_property(KEY_REMS2, s);
 		}
 		//
 		info_etudiant::note_t  info_etudiant::ue31(void) const {
@@ -846,7 +881,7 @@ namespace info {
 			}
 		}
 		void info_etudiant::rem_s3(const string_t &s) {
-			set_string_property(etud_strings::KEY_REMS3, s);
+			set_string_property(KEY_REMS3, s);
 		}
 		//
 		info_etudiant::note_t  info_etudiant::ue41(void) const {
@@ -978,8 +1013,145 @@ namespace info {
 			}
 		}
 		void info_etudiant::rem_s4(const string_t &s) {
-			set_string_property(etud_strings::KEY_REMS4, s);
+			set_string_property(KEY_REMS4, s);
 		}
+		///////////////////////////////////////////
+		std::future<bool> info_etudiant::set_avatar_blob(couchdb_manager &oMan, const blob_data &blob) {
+			couchdb_manager *pMan = &oMan;
+			std::shared_ptr<blob_data> pv = std::make_shared <blob_data>(blob);
+			return std::async([this, pMan, pv]()->bool {
+				bool bRet{ false };
+				update_response rsp = pMan->update_document_attachment_async(*this, *pv).get();
+				if (rsp.ok()) {
+					string_t sname = pv->name();
+					this->avatar(sname);
+					bRet = this->save(*pMan).get();
+				}
+				return (bRet);
+			});
+		}//set_avatar_blob
+		std::future<int> info_etudiant::get_count_async(couchdb_manager &oMan, const query_filter &filter ) {
+			couchdb_manager *pMan = &oMan;
+			std::shared_ptr<query_filter> pf = std::make_shared < query_filter>(filter);
+			return std::async([pMan, pf]()->int {
+				query_filter f{ *pf };
+				f.add_equals(KEY_TYPE, any{ TYPE_ETUD });
+				int nRet = pMan->find_documents_count_async(f).get();
+				return (nRet);
+			});
+		}//get_count_async
+		std::future<std::vector<info_etudiant> > info_etudiant::get_async(info::couchdb::couchdb_manager &oMan,
+			const info::couchdb::query_filter &filter) {
+			couchdb_manager *pMan = &oMan;
+			std::shared_ptr<query_filter> pf = std::make_shared < query_filter>(filter);
+			return std::async([pMan, pf]()->std::vector<info_etudiant> {
+				std::vector<info_etudiant> oRet{};
+				query_filter f{ *pf };
+				f.add_equals(KEY_TYPE, any{ TYPE_ETUD });
+				std::vector<couchdb_doc> vv = pMan->find_documents_async(f).get();
+				for (auto p : vv) {
+					info_etudiant cur{ p.get() };
+					oRet.push_back(cur);
+				}// p
+				return (oRet);
+			});
+		}//get_async
+		std::future<std::vector<bool>> info_etudiant::maintains_async(const std::vector<info_etudiant> &ovec,
+			info::couchdb::couchdb_manager &oMan) {
+			couchdb_manager *pMan = &oMan;
+			std::shared_ptr<std::vector<info_etudiant>> pv = std::make_shared<std::vector<info_etudiant>>(ovec);
+			return std::async([pMan, pv]()->std::vector<bool> {
+				std::vector<bool> oRet{};
+				for (auto it = pv->begin(); it != pv->end(); ++it) {
+					info_etudiant &cur = *it;
+					bool b = cur.save(*pMan).get();
+					oRet.push_back(b);
+				}// it
+				return (oRet);
+			});
+		}//maintains_async
+		std::future<bool> info_etudiant::check_indexes_async(info::couchdb::couchdb_manager &oMan) {
+			couchdb_manager *pMan = &oMan;
+			return std::async([pMan]()->bool {
+				static const std::vector<string_t> fields{KEY_LASTNAME,KEY_FIRSTNAME,KEY_FULLNAME,
+				KEY_USERNAME,KEY_EMAIL,KEY_BIRTHDATE,KEY_APB,KEY_ANNEE,KEY_GROUPE,KEY_DOSSIER,
+				KEY_SEXE,KEY_DEPARTEMENT,KEY_VILLE,KEY_ETABLISSEMENT,KEY_SERIEBAC,KEY_OPTIONBAC,
+				KEY_MENTIONBAC,KEY_ETUDESSUPERIEURES,KEY_REDOUBLANT,KEY_AVATAR,KEY_PHONE,
+                KEY_STATUS,KEY_DESC,
+                KEY_UE11,KEY_UE12,KEY_UE13,KEY_MOYS1,KEY_RES1,KEY_RGS1,KEY_REMS1,
+				KEY_UE21,KEY_UE22,KEY_UE23,KEY_MOYS2,KEY_RES2,KEY_RGS2,KEY_REMS2,KEY_COMPS1S2,
+				KEY_UE31,KEY_UE32,KEY_UE33,KEY_MOYS3,KEY_RES3,KEY_RGS3,KEY_REMS3,KEY_COMPS2S3,
+				KEY_UE41,KEY_UE42,KEY_UE43,KEY_MOYS4,KEY_RES4,KEY_RGS4,KEY_REMS4,KEY_COMPS3S4
+				};
+				bool bRet{ true };
+				for (auto field : fields) {
+					update_response rsp = pMan->create_index_async(field).get();
+				}// fields
+				return (bRet);
+			});
+		}//check_indexes_async
+		///////////////////////////////////////
+		const std::set<info_fielddesc> info_etudiant::get_descs(void) const {
+			std::set<info_fielddesc> oSet{};
+			oSet.insert(info_fielddesc{ KEY_APB,U("APB"),U("APB"),info_datatype::integer });
+			oSet.insert(info_fielddesc{ KEY_ANNEE,U("Année universitaire"),U("ANNEE"),info_datatype::integer });
+			oSet.insert(info_fielddesc{ KEY_GROUPE,U("Groupe"),U("GROUPE"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_DOSSIER,U("Dossier"),U("DOSSIER"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_USERNAME,U("Identifiant utilisateur"),U("USERNAME"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_FIRSTNAME,U("Prénom(s)"),U("FIRSTNAME"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_LASTNAME,U("Nom de famille"),U("LASTNAME"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_SEXE,U("Sexe"),U("SEXE"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_BIRTHDATE,U("Année naissance"),U("BIRTHYEAR"),info_datatype::integer });
+			oSet.insert(info_fielddesc{ KEY_DEPARTEMENT,U("Département"),U("DEPARTEMENT"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_VILLE,U("Ville"),U("VILLE"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_ETABLISSEMENT,U("Etablissement"),U("LYCEE"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_SERIEBAC,U("Série Bac"),U("SERIEBAC"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_OPTIONBAC,U("Option Bac"),U("OPTIONBAC"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_MENTIONBAC,U("Mention Bac"),U("MENTIONBAC"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_ETUDESSUPERIEURES,U("Etudes supérieures"),U("ETUDESSUPERIEURES"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_REDOUBLANT,U("Redoublant"),U("REDOUBLANT"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_AVATAR,U("Avatar"),U("AVATAR"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_EMAIL,U("Email"),U("EMAIL"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_PHONE,U("Téléphone"),U("PHONE"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_DATASETS,U("Datasets"),U("DATASETS"),info_datatype::vector });
+			//
+			oSet.insert(info_fielddesc{ KEY_UE11,U("Ue1-S1"),U("UE11"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_UE12,U("Ue2-S1"),U("UE12"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_UE13,U("Ue3-S1"),U("UE13"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_MOYS1,U("Moy-S1"),U("MOYS1"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_RES1,U("Résultat-S1"),U("RES1"),info_datatype::result });
+			oSet.insert(info_fielddesc{ KEY_RGS1,U("Rang-S1"),U("RGS1"),info_datatype::integer });
+			oSet.insert(info_fielddesc{ KEY_REMS1,U("Remarques-S1"),U("REMS1"),info_datatype::text });
+			//
+			oSet.insert(info_fielddesc{ KEY_UE21,U("Ue1-S2"),U("UE21"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_UE22,U("Ue2-S2"),U("UE22"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_UE23,U("Ue3-S2"),U("UE23"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_MOYS2,U("Moy-S2"),U("MOYS2"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_RES2,U("Résultat-S2"),U("RES2"),info_datatype::result });
+			oSet.insert(info_fielddesc{ KEY_RGS2,U("Rang-S2"),U("RGS2"),info_datatype::integer });
+			oSet.insert(info_fielddesc{ KEY_REMS2,U("Remarques-S2"),U("REMS2"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_COMPS1S2,U("Comp-S1S2"),U("CPMPS1S2"),info_datatype::real });
+			//
+			oSet.insert(info_fielddesc{ KEY_UE31,U("Ue1-S3"),U("UE31"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_UE32,U("Ue2-S3"),U("UE32"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_UE33,U("Ue3-S3"),U("UE33"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_MOYS3,U("Moy-S3"),U("MOYS3"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_RES3,U("Résultat-S3"),U("RES3"),info_datatype::result });
+			oSet.insert(info_fielddesc{ KEY_RGS3,U("Rang-S3"),U("RGS3"),info_datatype::integer });
+			oSet.insert(info_fielddesc{ KEY_REMS3,U("Remarques-S3"),U("REMS3"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_COMPS2S3,U("Comp-S2S3"),U("CPMPS2S3"),info_datatype::real });
+			//
+			oSet.insert(info_fielddesc{ KEY_UE41,U("Ue1-S4"),U("UE41"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_UE42,U("Ue2-S4"),U("UE42"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_UE43,U("Ue3-S4"),U("UE43"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_MOYS4,U("Moy-S4"),U("MOYS4"),info_datatype::real });
+			oSet.insert(info_fielddesc{ KEY_RES4,U("Résultat-S4"),U("RES4"),info_datatype::result });
+			oSet.insert(info_fielddesc{ KEY_RGS4,U("Rang-S4"),U("RGS4"),info_datatype::integer });
+			oSet.insert(info_fielddesc{ KEY_REMS4,U("Remarques-S4"),U("REMS4"),info_datatype::text });
+			oSet.insert(info_fielddesc{ KEY_COMPS3S4,U("Comp-S3S4"),U("CPMPS3S4"),info_datatype::real });
+			//
+			return (oSet);
+		}//get_descs
 		////////////////////////////////////////
 	}// namespace domain
 	 //////////////////////////////////////////

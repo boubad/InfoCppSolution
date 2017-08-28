@@ -35,7 +35,7 @@ namespace info {
 		bool type_doc::is_storable(void) const {
 			string_t sid = id();
 			if (!sid.empty()) {
-				return (false);
+				return (true);
 			}
 			std::vector<std::vector<string_t>> vvec{};
 			unique_properties(vvec);
@@ -71,21 +71,25 @@ namespace info {
 			std::vector<std::vector<string_t>> vvec{};
 			this->unique_properties(vvec);
 			for (auto vec : vvec) {
+				bool bFound{ true };
 				query_filter filter{};
 				for (auto key : vec) {
 					any va{};
 					if (!get_any_property(key, va)) {
-						return (false);
+						bFound = false;
+						break;
 					}
 					filter.add_equals(key, va);
 				}// key
-				filter.set_limit(1);
-				filter.set_skip(0);
-				std::vector<couchdb_doc> vv = oMan.find_documents_async(filter).get();
-				if (!vv.empty()) {
-					doc = vv[0];
-					return (true);
-				}
+				if (bFound) {
+					filter.set_limit(1);
+					filter.set_skip(0);
+					std::vector<couchdb_doc> vv = oMan.find_documents_async(filter).get();
+					if (!vv.empty()) {
+						doc = vv[0];
+						return (true);
+					}
+				}// bFound
 			}// vec
 			return (false);
 		}//load_unique
@@ -121,31 +125,33 @@ namespace info {
 				std::vector<std::vector<string_t>> vvec{};
 				this->unique_properties(vvec);
 				for (auto vec : vvec) {
+					bool bFound{ true };
 					query_filter filter{};
 					for (auto key : vec) {
 						any va{};
 						if (!get_any_property(key, va)) {
-							return (false);
+							bFound = false;
+							break;
 						}
 						filter.add_equals(key, va);
 					}// key
-					filter.set_limit(1);
-					filter.set_skip(0);
-					std::vector<couchdb_doc> vv = pMan->find_documents_async(filter).get();
-					if (!vv.empty()) {
-						couchdb_doc old = vv[0];
-						 string_t sx = old.id();
-						 if ((!docid.empty()) && (sx != docid)) {
-							 return (false);
-						 }
-					}
+					if (bFound) {
+						filter.set_limit(1);
+						filter.set_skip(0);
+						std::vector<couchdb_doc> vv = pMan->find_documents_async(filter).get();
+						if (!vv.empty()) {
+							couchdb_doc old = vv[0];
+							string_t sx = old.id();
+							if ((!docid.empty()) && (sx != docid)) {
+								return (false);
+							}
+							else if (docid.empty() && (!sx.empty())) {
+								docid = sx;
+								this->id(sx);
+							}
+						}
+					}// bFound
 				}// vec
-				couchdb_doc d{};
-				this->load_unique(*pMan, d);
-				if (d.is_persisted()) {
-					this->id(d.id());
-					this->version(d.version());
-				}
 				update_response r = pMan->maintains_document_async(*this).get();
 				if (r.ok()) {
 					return this->load(*pMan).get();

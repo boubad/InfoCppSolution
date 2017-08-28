@@ -390,6 +390,7 @@ namespace info {
 			const string_t &ind_name /*= string_t{}*/,
 			const string_t &stype /*= U("json")*/,
 			const string_t &ddoc /*= string_t{}*/) {
+			assert(!field.empty());
 			infovector vx{};
 			vx.push_back( any{field} );
 			infomap xMap{};
@@ -399,13 +400,23 @@ namespace info {
 			if (!ind_name.empty()) {
 				oMap[KEY_NAME] = any{ ind_name };
 			}
+			else {
+				string_t sx = field + U("_index");
+				oMap[KEY_NAME] = any{ sx };
+			}
 			if (!ddoc.empty()) {
 				oMap[KEY_DDOC] = any{ ddoc };
 			}
 			if (!stype.empty()) {
 				oMap[KEY_TYPE] = any{ stype };
 			}
+			else {
+				string_t sx(U("json"));
+				oMap[KEY_TYPE] = any{ sx };
+			}
+			
 			any doc{ oMap };
+			//string_t sx = stringutils::any_to_stringt(doc);
 			std::shared_ptr<any> pa = std::make_shared<any>(doc);
 			return std::async([this, pa]()->index_response {
 				check_databasename();
