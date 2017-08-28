@@ -2,6 +2,7 @@
 /////////////////////////////
 #include <stringutils.h>
 #include <couchdb_manager.h>
+#include <algorithm>
 ////////////////////////
 namespace info {
 	namespace domain {
@@ -1085,7 +1086,11 @@ namespace info {
 				};
 				bool bRet{ true };
 				for (auto field : fields) {
-					update_response rsp = pMan->create_index_async(field).get();
+					index_response rsp = pMan->create_index_async(field).get();
+                    if (!rsp.ok()){
+                        bRet = false;
+                        break;
+                    }
 				}// fields
 				return (bRet);
 			});

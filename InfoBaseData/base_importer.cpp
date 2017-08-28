@@ -1,5 +1,6 @@
 #include "base_importer.h"
 #include "stringutils.h"
+#include <algorithm>
 ////////////////////////////////
 namespace info {
 		////////////////////////////////////

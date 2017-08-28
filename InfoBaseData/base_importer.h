@@ -35,7 +35,7 @@ namespace info {
 			optional<std::map<size_t, string_t>> first_line_headers(void);
 			optional<std::map<string_t, string_t>> next_line_map(void);
 			bool next_item(infomap &oMap);
-			const info_fielddesc *base_importer::find_desc(const string_t &fieldname) const;
+			const info_fielddesc *find_desc(const string_t &fieldname) const;
 			//
 			virtual void register_item(const infomap &oMap);
 			virtual bool create_item(infomap &oMap) const = 0;
