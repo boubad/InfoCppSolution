@@ -8,10 +8,7 @@ namespace info {
 			base_importer(in,sdel)
 		{
 		}
-		etud_importer::etud_importer(const string_t &filename, const string_t &sdel /*= string_t{ U(";") }*/) :
-			base_importer(filename, sdel)
-		{
-		}
+		
 
 		etud_importer::~etud_importer()
 		{

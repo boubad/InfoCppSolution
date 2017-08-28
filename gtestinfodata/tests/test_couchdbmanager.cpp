@@ -5,11 +5,14 @@
 #include <couchdb_manager.h>
 #include <server_info.h>
 #include <update_response.h>
+#include <info_etudiant.h>
+#include <etud_importer.h>
 /////////////////////////
 namespace {
 using namespace info;
 using namespace info::http;
 using namespace info::couchdb;
+using namespace info::domain;
 ///////////////////////////
 class CouchDBManagerTest : public ::testing::Test {
 protected:
@@ -55,18 +58,30 @@ protected:
             couchdb_doc doc { a };
             vec.push_back(doc);
         }// i
+        //
     }// SetUpTestCase
     static void TearDownTestCase() {
         st_m_docs.clear();
     }//TearDownTestCase
     virtual void SetUp() {
-        m_serverurl = serverurl { U("http://192.168.1.17:5984") };
+        m_serverurl = serverurl { U("http://localhost:5984") };
         m_dbname = databasename { U("xxtest") };
         m_httpclient.reset(new http_manager { m_serverurl,m_username,m_password });
         http_client *pClient = m_httpclient.get();
         ASSERT_TRUE(pClient != nullptr);
         m_man.reset(new couchdb_manager { *pClient,m_dbname });
         ASSERT_TRUE(m_man.get() != nullptr);
+        //
+        couchdb_manager *pMan = m_man.get();
+        ASSERT_TRUE(pMan != nullptr);
+         string_t dbname = m_dbname;
+         bool b = pMan->exists_database_async(dbname).get();
+         if (!b) {
+             b = pMan->create_database_async(dbname).get();
+             ASSERT_TRUE(b);
+         }
+         bool bRet = info_etudiant::check_indexes_async(*pMan).get();
+         ASSERT_TRUE(bRet);
         //
         infomap oMap {};
         string_t sid(U("testid"));
@@ -132,29 +147,17 @@ TEST_F(CouchDBManagerTest,Databases)
 {
     couchdb_manager *pMan = m_man.get();
     ASSERT_TRUE(pMan != nullptr);
-    string_t dbname = m_dbname;
-    bool b = pMan->exists_database_async(dbname).get();
-    if (!b) {
-        b = pMan->create_database_async(dbname).get();
-        ASSERT_TRUE(b);
-    }
     std::vector<string_t> vv = pMan->get_all_databases_async().get();
     ASSERT_TRUE(!vv.empty());
-    b = pMan->delete_database_async(dbname).get();
+    bool b = pMan->delete_database_async(m_dbname).get();
     ASSERT_TRUE(b);
-    b = pMan->exists_database_async(dbname).get();
+    b = pMan->exists_database_async(m_dbname).get();
     ASSERT_TRUE(!b);
 }// Databases
 TEST_F(CouchDBManagerTest,Documents)
 {
     couchdb_manager *pMan = m_man.get();
     ASSERT_TRUE(pMan != nullptr);
-    string_t dbname = m_dbname;
-    bool b = pMan->exists_database_async(dbname).get();
-    if (!b) {
-        b = pMan->create_database_async(dbname).get();
-        ASSERT_TRUE(b);
-    }
     string_t sid(U("testid"));
     couchdb_doc doc = pMan->get_document_by_id_async(sid).get();
     if (doc.empty()) {
@@ -176,7 +179,7 @@ TEST_F(CouchDBManagerTest,Documents)
     update_response rsp1 = pMan->maintains_document_async(xdoc).get();
     ASSERT_TRUE(rsp1.ok());
     update_response rsp2 = pMan->delete_document_async(doc).get();
-    b = rsp2.ok();
+    bool b = rsp2.ok();
     ASSERT_TRUE(b);
     sRev2 = pMan->get_document_version_async(sid).get();
     ASSERT_TRUE(sRev2.empty());
@@ -187,14 +190,8 @@ TEST_F(CouchDBManagerTest,Index)
 {
     couchdb_manager *pMan = m_man.get();
     ASSERT_TRUE(pMan != nullptr);
-    string_t dbname = m_dbname;
-    bool b = pMan->exists_database_async(dbname).get();
-    if (!b) {
-        b = pMan->create_database_async(dbname).get();
-        ASSERT_TRUE(b);
-    }
     string_t field(U("ival"));
-    index_response rsp = pMan->create_index_async(dbname, field).get();
+    index_response rsp = pMan->create_index_async(field).get();
     if (rsp.ok()) {
         string_t sid = rsp.index_id();
         ASSERT_TRUE(!sid.empty());
@@ -208,12 +205,6 @@ TEST_F(CouchDBManagerTest,Bulk)
 {
     couchdb_manager *pMan = m_man.get();
     ASSERT_TRUE(pMan != nullptr);
-    string_t dbname = m_dbname;
-    bool b = pMan->exists_database_async(dbname).get();
-    if (!b) {
-        b = pMan->create_database_async(dbname).get();
-        ASSERT_TRUE(b);
-    }
     string_t stype(U("testtype"));
     string_t keysigle(U("sigle"));
     query_filter filter {};
@@ -256,12 +247,6 @@ TEST_F(CouchDBManagerTest,Attachments)
 {
     couchdb_manager *pMan = m_man.get();
     ASSERT_TRUE(pMan != nullptr);
-    string_t dbname = m_dbname;
-    bool b = pMan->exists_database_async(dbname).get();
-    if (!b) {
-        b = pMan->create_database_async(dbname).get();
-        ASSERT_TRUE(b);
-    }
     string_t sid(U("testid"));
     couchdb_doc doc = pMan->get_document_by_id_async(sid).get();
     if (doc.empty()) {
@@ -273,7 +258,7 @@ TEST_F(CouchDBManagerTest,Attachments)
     ASSERT_TRUE(doc.is_persisted());
     string_t filename(U("/home/boubad/testdata/test.jpg"));
     blob_data blob { filename };
-    b = blob.ok();
+    bool b = blob.ok();
     ASSERT_TRUE(b);
     string_t attname = blob.name();
     update_response rsp = pMan->update_document_attachment_async(doc, blob).get();
@@ -299,5 +284,99 @@ TEST_F(CouchDBManagerTest,Attachments)
     blob_data *pb2 = bb2.get();
     ASSERT_TRUE(!pb2->ok());
 }// Databases
+TEST_F(CouchDBManagerTest,ImportEtuds)
+{
+    string_t filename(U("/home/boubad/testdata/Etuds_s4.csv"));
+    ifstream_t in{filename};
+    ASSERT_TRUE(in.is_open());
+    etud_importer oImport{ in };
+    bool b = oImport.import();
+    ASSERT_TRUE(b);
+    std::vector<any> vv = oImport.get_items();
+    ASSERT_TRUE(!vv.empty());
+}//CouchDBManager_CreateIndex
+TEST_F(CouchDBManagerTest,SaveImportEtuds)
+{
+    string_t filename(U("/home/boubad/testdata/Etuds_s4.csv"));
+    ifstream_t in{filename};
+    ASSERT_TRUE(in.is_open());
+    etud_importer oImport{ in };
+    bool b = oImport.import();
+    ASSERT_TRUE(b);
+    std::vector<any> vv = oImport.get_items();
+    ASSERT_TRUE(!vv.empty());
+    //
+    couchdb_manager *pMan = m_man.get();
+   ASSERT_TRUE(pMan != nullptr);
+    string_t dbname = m_dbname;
+    b = pMan->exists_database_async(dbname).get();
+    if (!b) {
+        b = pMan->create_database_async(dbname).get();
+        ASSERT_TRUE(b);
+    }
+    string_t field(info_etudiant::KEY_FULLNAME);
+    index_response rsp = pMan->create_index_async(field).get();
+    ASSERT_TRUE(rsp.ok());
+    std::vector<info_etudiant> etuds{};
+    for (auto va : vv) {
+        info_etudiant oEtud{ va };
+        b = oEtud.load(*pMan).get();
+        if (!b) {
+            b = oEtud.save(*pMan).get();
+        }
+        if (oEtud.is_persisted()){
+        etuds.push_back(oEtud);
+        }
+    }// va
+    query_filter filter{};
+    int nPageSize{ 10 };
+    filter.set_limit(nPageSize);
+    filter.add_sort(info_etudiant::KEY_FULLNAME);
+//	filter.add_projection_field(info_etudiant::KEY_FULLNAME);
+//	filter.add_projection_field(info_etudiant::KEY_DOSSIER);
+//	filter.add_projection_field(info_etudiant::KEY_VERSION);
+    int nTotal = info_etudiant::get_count_async(*pMan,filter).get();
+    int nOffset{ 0 };
+    while (nOffset < nTotal) {
+        filter.set_skip(nOffset);
+        std::vector<info_etudiant> xx = info_etudiant::get_async(*pMan, filter).get();
+        int nx = static_cast<int>(xx.size());
+        nOffset += nx;
+        for (auto x : xx) {
+            ucout << x << std::endl;
+        }// x
+        if (nx < nPageSize) {
+            break;
+        }
+    }// nOffset
+}//CouchDBManager_CreateIndex
+TEST_F(CouchDBManagerTest,ReadEtuds)
+{
+    couchdb_manager *pMan = m_man.get();
+    ASSERT_TRUE(pMan != nullptr);
+    query_filter filter{};
+    int nPageSize{ 10 };
+    filter.set_limit(nPageSize);
+    
+    filter.add_projection_field(info_etudiant::KEY_FULLNAME);
+    filter.add_projection_field(info_etudiant::KEY_FIRSTNAME);
+    filter.add_projection_field(info_etudiant::KEY_LASTNAME);
+    //filter.add_sort(info_etudiant::KEY_LASTNAME);
+    filter.add_sort(info_etudiant::KEY_FIRSTNAME);
+    int nTotal = info_etudiant::get_count_async(*pMan, filter).get();
+    int nOffset{ 0 };
+    while (nOffset < nTotal) {
+        filter.set_skip(nOffset);
+        std::vector<info_etudiant> xx = info_etudiant::get_async(*pMan, filter).get();
+        int nx = static_cast<int>(xx.size());
+        nOffset += nx;
+        for (auto x : xx) {
+            ucout << x << std::endl;
+        }// x
+        if (nx < nPageSize) {
+            break;
+        }
+    }// nOffset
+}//CouchDBManager_ReadEtuds
 ////////////////////////////
 }// namespace

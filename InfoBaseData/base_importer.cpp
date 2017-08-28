@@ -4,19 +4,10 @@
 ////////////////////////////////
 namespace info {
 		////////////////////////////////////
-		base_importer::base_importer(istream_t &in, const string_t &sdel) :m_pin(&in), m_delim(sdel) {
-		}
-		base_importer::base_importer(const string_t &filename, const string_t &sdel) : m_pin(nullptr), m_delim(sdel) {
-			m_in.reset(new ifstream_t{ filename });
-			m_pin = m_in.get();
-			assert(m_pin != nullptr);
+		base_importer::base_importer(istream_t &in, const string_t &sdel) :m_in(in), m_delim(sdel) {
 		}
 		base_importer::~base_importer()
 		{
-		}
-		istream_t & base_importer::get_stream(void) const {
-			assert(m_pin != nullptr);
-			return *(m_pin);
 		}
 		const string_t & base_importer::delimiter(void) const {
 			return (m_delim);
@@ -74,14 +65,14 @@ namespace info {
 			return (true);
 		}// first
 		std::optional<string_t> base_importer::next_line(void) {
-			istream_t &in = get_stream();
+			istream_t &in = m_in;
 			bool bDone{ false };
 			while ((!in.eof()) && (!bDone)) {
 				string_t s;
 				std::getline(in, s);
 				string_t ss = stringutils::trim(s);
 				if (ss.empty()) {
-					continue;
+					return  optional<string_t>{};
 				}
 				if (ss[0] == U('#')) {
 					continue;
@@ -174,12 +165,16 @@ namespace info {
 				return (false);
 			}
 			bool done{ false };
+            int nCount = 0;
 			while (!done) {
+                ++nCount;
 				infomap oMap{};
 				if (!next_item(oMap)) {
 					done = true;
 					break;
 				}
+				any a{oMap};
+                string_t sx = stringutils::any_to_stringt(a);
 				this->register_item(oMap);
 			}// done
 			return (true);

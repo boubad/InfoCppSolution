@@ -14,9 +14,8 @@ namespace info {
 			base_importer(const  base_importer &other) = delete;
 			base_importer & operator=(const  base_importer &other) = delete;
 		protected:
-			istream_t *m_pin;
+			istream_t &m_in;
 			string_t m_delim;
-			std::shared_ptr<istream_t> m_in;
 			std::set<info_fielddesc> m_descs;
 			//
 			std::vector<any> m_data;
@@ -24,7 +23,6 @@ namespace info {
 			std::map<size_t, string_t> m_headers;
 			//
 		protected:
-			istream_t & get_stream(void) const;
 			const std::map<string_t, string_t> & headers_map(void) const;
 			std::map<string_t, string_t> & headers_map(void);
 			const std::map<size_t, string_t> &headers(void) const;
@@ -43,7 +41,6 @@ namespace info {
 			virtual string_t transform_header(const string_t &s);
 		protected:
 			base_importer(istream_t &in, const string_t &sdel = string_t{ U(";") });
-			base_importer(const string_t &filename, const string_t &sdel = string_t{ U(";") });
 		public:
 			virtual ~base_importer();
 		public:

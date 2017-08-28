@@ -11,7 +11,6 @@ namespace info {
 		{
 		public:
 			etud_importer(istream_t &in, const string_t &sdel = string_t{ U(";") });
-			etud_importer(const string_t &filename, const string_t &sdel = string_t{ U(";") });
 			~etud_importer();
 		protected:
 			virtual void register_item(const infomap &item) override;
