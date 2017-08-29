@@ -397,6 +397,7 @@ namespace info {
 				const byte *pData = pv->data(n);
 				std::vector<byte> vec{ pData, pData + n };
 				req->set_body(vec);
+                req->headers().remove(HEADER_CONTENT_TYPE);
 				req->headers().add(HEADER_CONTENT_TYPE, pv->mime_type());
 				info_http_response_ptr rsp = std::make_shared<info_http_response>();
 				assert(rsp.get() != nullptr);
