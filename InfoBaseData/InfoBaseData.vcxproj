@@ -158,25 +158,35 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="attachment_info.h" />
     <ClInclude Include="base_importer.h" />
     <ClInclude Include="blob_data.h" />
+    <ClInclude Include="datastore_manager.h" />
     <ClInclude Include="http_client.h" />
     <ClInclude Include="infobaseobject.h" />
     <ClInclude Include="InfoDefs.h" />
+    <ClInclude Include="info_document.h" />
     <ClInclude Include="info_fielddesc.h" />
     <ClInclude Include="info_response.h" />
     <ClInclude Include="info_utils.h" />
+    <ClInclude Include="query_filter.h" />
     <ClInclude Include="stringutils.h" />
+    <ClInclude Include="update_response.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="attachment_info.cpp" />
     <ClCompile Include="base_importer.cpp" />
     <ClCompile Include="blob_data.cpp" />
+    <ClCompile Include="datastore_manager.cpp" />
     <ClCompile Include="http_client.cpp" />
     <ClCompile Include="infobaseobject.cpp" />
     <ClCompile Include="InfoDefs.cpp" />
+    <ClCompile Include="info_document.cpp" />
     <ClCompile Include="info_fielddesc.cpp" />
     <ClCompile Include="info_response.cpp" />
+    <ClCompile Include="query_filter.cpp" />
     <ClCompile Include="stringutils.cpp" />
+    <ClCompile Include="update_response.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

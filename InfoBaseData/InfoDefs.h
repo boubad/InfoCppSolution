@@ -6,11 +6,13 @@
 #include <stdexcept>
 #include <memory>
 #include <string>
+#include <set>
 #include <vector>
 #include <map>
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <future>
 //////////////////////////////////
 #if defined(_MSC_VER)
 #include <any>

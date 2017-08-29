@@ -4,7 +4,9 @@
 //////////////////////////
 #include "info_baseitem.h"
 #include "etud_strings.h"
+/////////////////////////
 #include <blob_data.h>
+#include <query_filter.h>
 ////////////////////////////
 namespace info {
 	namespace domain {
@@ -27,7 +29,7 @@ namespace info {
 			virtual ~info_etudiant();
 			bool operator==(const info_etudiant &other) const;
 			bool operator<(const info_etudiant &other) const;
-			virtual const std::set<info_fielddesc>  get_descs(void) const override;
+			virtual void get_descs(std::set<info_fielddesc> &oSet) const override;
 			string_t avatar_url(void) const;
 			bool has_avatar_url(void) const;
 		public:
@@ -141,14 +143,13 @@ namespace info {
 			void rem_s4(const string_t &s);
 			//
 			///////////////////////////////
-			std::future<bool> set_avatar_blob(info::couchdb::couchdb_manager &oMan,const blob_data &blob);
-			static std::future<int> get_count_async(info::couchdb::couchdb_manager &oMan,
-				const info::couchdb::query_filter &filter = info::couchdb::query_filter{});
-			static std::future<std::vector<info_etudiant> > get_async(info::couchdb::couchdb_manager &oMan,
-				const info::couchdb::query_filter &filter = info::couchdb::query_filter{});
+			std::future<bool> set_avatar_blob(datastore_manager &oMan,const blob_data &blob);
+			static std::future<int> get_count_async(datastore_manager &oMan,const query_filter &filter = query_filter{});
+			static std::future<std::vector<info_etudiant> > get_async(datastore_manager &oMan,
+				const query_filter &filter = query_filter{});
 			static std::future<std::vector<bool>> maintains_async(const std::vector<info_etudiant> &ovec,
-				info::couchdb::couchdb_manager &oMan);
-			static std::future<bool> check_indexes_async(info::couchdb::couchdb_manager &oMan);
+				datastore_manager &oMan);
+			static std::future<bool> check_indexes_async(datastore_manager &oMan);
 			////////////////////////////////
 		}; // class info_etudiant
 		   ///////////////////////////

@@ -1,5 +1,6 @@
 #include "blob_data.h"
 #include "stringutils.h"
+#include "attachment_info.h"
 /////////////////////////////
 namespace info {
 	///////////////////////////////
@@ -10,10 +11,10 @@ namespace info {
 #endif
 	static const string_t APPLICATION_OCTETSTREAM(U("application/octet-stream"));
 	///////////////////////////
-	blob_data::blob_data() :m_size(0)
+	blob_data::blob_data() :m_persisted(false),m_size(0)
 	{
 	}
-	blob_data::blob_data(const string_t &filename) : m_size(0) {
+	blob_data::blob_data(const string_t &filename) : m_persisted(false),m_size(0) {
 		try {
 			std::string sfile = stringt_to_string(filename);
 			std::ifstream file{ sfile,std::ios::in | std::ios::binary | std::ios::ate };
@@ -49,6 +50,43 @@ namespace info {
 			}// file
 		}
 		catch (std::exception & /*ex*/) {}
+	}
+	blob_data::blob_data(const string_t &sid, const string_t &sname, const any &info):m_persisted(false),m_size(0) {
+		attachment_info o{ info };
+		string_t sc = o.content_type();
+		int nLen = o.length();
+		if ((nLen > 0) && (!sc.empty())) {
+			m_persisted = true;
+			m_id = sid;
+			m_mime = sc;
+			m_size = nLen;
+			m_name = sname;
+		}
+	}
+	blob_data::blob_data(size_t n) :m_persisted(false),m_size(0) {
+		if (n > 0) {
+			m_data.reset(new byte[n]);
+		}
+	}
+	
+	blob_data::blob_data(const blob_data &other) :m_persisted(other.m_persisted), m_size(other.m_size), m_id(other.m_id), m_name(other.m_name),
+		m_url(other.m_url),m_mime(other.m_mime),m_data(other.m_data) {
+
+	}
+	blob_data & blob_data::operator=(const blob_data &other) {
+		if (this != &other) {
+			m_persisted = other.m_persisted;
+			m_size = other.m_size;
+			m_id = other.m_id;
+			m_name = other.m_name;
+			m_url = other.m_url;
+			m_data = other.m_data;
+		}
+		return (*this);
+	}
+
+	blob_data::~blob_data()
+	{
 	}
 	string_t blob_data::fetch_mime_type(const string_t &s) {
 		static std::vector<std::pair<string_t, string_t>> stMap{
@@ -93,13 +131,7 @@ namespace info {
 		return (sRet);
 	}//fetch_mime_type
 	string_t blob_data::mime_type(void) const {
-		string_t sRet{};
-		for (auto p : m_mimes) {
-			if (p != APPLICATION_OCTETSTREAM) {
-				sRet = p;
-				break;
-			}
-		}
+		string_t sRet{ m_mime };
 		if (sRet.empty()) {
 			sRet = APPLICATION_OCTETSTREAM;
 		}
@@ -109,43 +141,14 @@ namespace info {
 		static string_t delim(U(","));
 		std::vector<string_t> vec{};
 		stringutils::split_vector(s, vec, delim, false);
-		m_mimes.clear();
+		m_mime.clear();
 		for (auto p : vec) {
 			string_t sk = stringutils::trim(p);
 			if (sk != APPLICATION_OCTETSTREAM) {
-				m_mimes.push_back(sk);
+				m_mime = sk;
 			}
 		}
 	}// mime_type
-	blob_data::blob_data(size_t n) :m_size(0) {
-		if (n > 0) {
-			m_data.reset(new byte[n]);
-		}
-	}
-	blob_data::blob_data(const string_t &sname, const string_t &smime, const std::vector<byte> &d,
-		const string_t &sid /*= string_t{}*/) : m_size(0), m_id(sid), m_name(sname) {
-		mime_type(smime);
-		data(d);
-	}
-	blob_data::blob_data(const blob_data &other) : m_size(other.m_size), m_id(other.m_id), m_rev(other.m_rev), m_name(other.m_name),
-		m_data(other.m_data), m_mimes(other.m_mimes) {
-
-	}
-	blob_data & blob_data::operator=(const blob_data &other) {
-		if (this != &other) {
-			m_size = other.m_size;
-			m_id = other.m_id;
-			m_rev = other.m_rev;
-			m_name = other.m_name;
-			m_data = other.m_data;
-			m_mimes = other.m_mimes;
-		}
-		return (*this);
-	}
-
-	blob_data::~blob_data()
-	{
-	}
 	void blob_data::data(const byte *pData, size_t nLength) {
 		if ((pData == nullptr) || (nLength < 1)) {
 			m_size = 0;
@@ -178,5 +181,51 @@ namespace info {
 			}
 		}
 	}
+	//
+	bool blob_data::is_persisted(void) const {
+		return m_persisted;
+	}
+	bool blob_data::is_storable(void) const {
+		return (size() > 0) && (m_data.get() != nullptr) && (m_mime.length() > 0);
+	}
+	bool blob_data::has_url(void) const {
+		string_t s = url();
+		return (!s.empty());
+	}
+	
+	bool blob_data::has_data(void) const {
+		return (size() > 0) && (m_data.get() != nullptr);
+	}
+	size_t blob_data::size(void) const {
+		return (m_size);
+	}
+	const blob_data::byte *blob_data::data(size_t & nLength) const {
+		nLength = m_size;
+		return (m_data.get());
+	}
+	blob_data::byte *blob_data::data(size_t & nLength) {
+		nLength = m_size;
+		return (m_data.get());
+	}
+	const string_t & blob_data::id(void) const {
+		return (m_id);
+	}
+	void blob_data::id(const string_t &s) {
+		m_id = s;
+	}
+	const string_t &blob_data::name(void) const {
+		return (m_name);
+	}
+	void blob_data::name(const string_t &s) {
+		m_name = s;
+	}
+	
+	const string_t &blob_data::url(void) const {
+		return (m_url);
+	}
+	void blob_data::url(const string_t &s) {
+		m_url = s;
+	}
+	
 	//////////////////////////
 }// namespace info

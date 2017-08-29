@@ -1,11 +1,8 @@
 #include "attachment_info.h"
-#include <stringutils.h>
+#include "stringutils.h"
 ///////////////////////////////
 namespace info {
-	namespace couchdb {
 		////////////////////////////////
-		const string_t attachment_info::KEY_NAME(U("key"));
-		const string_t attachment_info::KEY_URL(U("url"));
 		static const string_t APPLICATION_OCTETSTREAM(U("application/octet-stream"));
 		/////////////////////////////////
 		attachment_info::attachment_info()
@@ -25,22 +22,6 @@ namespace info {
 		}
 		attachment_info::~attachment_info()
 		{
-		}
-		string_t attachment_info::name(void) const {
-			string_t sRet{};
-			get_string_property(KEY_NAME, sRet);
-			return (sRet);
-		}
-		void attachment_info::name(const string_t &s) {
-			set_string_property(KEY_NAME, s);
-		}
-		string_t attachment_info::url(void) const {
-			string_t sRet{};
-			get_string_property(KEY_URL, sRet);
-			return (sRet);
-		}
-		void attachment_info::url(const string_t &s) {
-			set_string_property(KEY_URL, s);
 		}
 		string_t attachment_info::content_type(void) const {
 			string_t sRet{};
@@ -98,5 +79,4 @@ namespace info {
 			return (nRet);
 		}
 		////////////////////////////
-	}// namespace couchdb
 }// namespace info

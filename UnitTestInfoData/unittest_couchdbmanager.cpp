@@ -3,7 +3,7 @@
 ////////////////////////
 #include <stringutils.h>
 #include <http_manager.h>
-#include <couchdb_manager.h>
+#include <couchdb_storemanager.h>
 #include <server_info.h>
 #include <update_response.h>
 #include <etud_importer.h>
@@ -27,15 +27,15 @@ namespace UnitTestInfoData
 		string_t m_username;
 		string_t m_password;
 		std::shared_ptr<http_client> m_httpclient;
-		std::shared_ptr<couchdb_manager> m_man;
+		std::shared_ptr<couchdb_storemanager> m_man;
 		any m_doc;
 		//
-		static std::vector<couchdb_doc> st_m_docs;
+		static std::vector<info_document> st_m_docs;
 	public:
 		TEST_CLASS_INITIALIZE(ClassInitialize)
 		{
 			size_t n{ 50 };
-			std::vector<couchdb_doc> &vec = st_m_docs;
+			std::vector<info_document> &vec = st_m_docs;
 			vec.clear();
 			string_t stype(U("testtype"));
 			for (size_t i = 0; i < n; ++i) {
@@ -59,7 +59,7 @@ namespace UnitTestInfoData
 					oMap[U("sval")] = any{ s };
 				}
 				any a{ oMap };
-				couchdb_doc doc{ a };
+				info_document doc{ a };
 				vec.push_back(doc);
 			}// i
 		}//ClassInitialize
@@ -75,7 +75,7 @@ namespace UnitTestInfoData
 			m_httpclient.reset(new http_manager{ m_serverurl,m_username,m_password });
 			http_client *pClient = m_httpclient.get();
 			Assert::IsNotNull(pClient);
-			m_man.reset(new couchdb_manager{ *pClient,m_dbname });
+			m_man.reset(new couchdb_storemanager{ *pClient,m_dbname });
 			Assert::IsNotNull(m_man.get());
 			//
 			infomap oMap{};
@@ -109,7 +109,7 @@ namespace UnitTestInfoData
 
 		TEST_METHOD(CouchDBManager_ServerInfo)
 		{
-			couchdb_manager *pMan = m_man.get();
+			couchdb_storemanager *pMan = m_man.get();
 			Assert::IsNotNull(pMan);
 			server_info info{};
 			bool b = pMan->get_server_info(info);
@@ -134,139 +134,106 @@ namespace UnitTestInfoData
 		}//CouchDBManager_ServerInfo
 		TEST_METHOD(CouchDBManager_GetAllDatabases)
 		{
-			couchdb_manager *pMan = m_man.get();
+			couchdb_storemanager *pMan = m_man.get();
 			Assert::IsNotNull(pMan);
-			std::vector<string_t> vv = pMan->get_all_databases_async().get();
+			std::vector<string_t> vv{};
+			bool bRet = pMan->get_all_databases(vv);
+			Assert::IsTrue(bRet);
 			Assert::IsFalse(vv.empty());
 		}//CouchDBManager_GetAllDatabases
 		TEST_METHOD(CouchDBManager_GetUuids)
 		{
-			couchdb_manager *pMan = m_man.get();
+			couchdb_storemanager *pMan = m_man.get();
 			Assert::IsNotNull(pMan);
 			size_t nCount = 10;
-			std::vector<string_t> vv = pMan->get_uuids_async((int)nCount).get();
+			std::vector<string_t> vv{};
+			bool bRet = pMan->get_uuids(vv,(int)nCount);
+			Assert::IsTrue(bRet);
 			size_t ns = vv.size();
 			Assert::AreEqual(nCount, ns);
 		}//CouchDBManager_GetUuids
 		TEST_METHOD(CouchDBManager_CreateDeleteDatabase)
 		{
-			couchdb_manager *pMan = m_man.get();
+			couchdb_storemanager *pMan = m_man.get();
 			Assert::IsNotNull(pMan);
-			string_t dbname = m_dbname;
-			bool b = pMan->exists_database_async(dbname).get();
+			string_t dbname(U("yytest"));
+			bool b = pMan->exists_database(dbname);
 			if (!b) {
-				b = pMan->create_database_async(dbname).get();
+				b = pMan->create_database(dbname);
 				Assert::IsTrue(b);
 			}
-			b = pMan->delete_database_async(dbname).get();
+			b = pMan->delete_database(dbname);
 			Assert::IsTrue(b);
-			b = pMan->exists_database_async(dbname).get();
+			b = pMan->exists_database(dbname);
 			Assert::IsFalse(b);
 		}//CouchDBManager_CreateDeleteDatabase
 		TEST_METHOD(CouchDBManager_CreateDeleteDocument)
 		{
-			couchdb_manager *pMan = m_man.get();
+			couchdb_storemanager *pMan = m_man.get();
 			Assert::IsNotNull(pMan);
-			string_t dbname = m_dbname;
-			bool b = pMan->exists_database_async(dbname).get();
-			if (!b) {
-				b = pMan->create_database_async(dbname).get();
-				Assert::IsTrue(b);
-			}
 			string_t sid(U("testid"));
-			couchdb_doc doc = pMan->get_document_by_id_async(sid).get();
-			if (doc.empty()) {
-				update_response r = pMan->maintains_document_async(m_doc).get();
-				Assert::IsTrue(r.ok());
-				doc = pMan->get_document_by_id_async(sid).get();
-				Assert::IsFalse(doc.empty());
+			info_document doc{};
+			if (!pMan->get_document_by_id(sid,doc)){
+				update_response r{};
+				info_document d{ m_doc };
+				bool b = pMan->maintains_document(d,r);
+				Assert::IsTrue(b);
+				b = pMan->get_document_by_id(sid,doc);
+				Assert::IsTrue(b);
 			}
 			Assert::IsTrue(doc.is_persisted());
 			string_t sid2 = doc.id();
 			Assert::AreEqual(sid, sid2);
 			string_t srev = doc.version();
 			Assert::IsFalse(srev.empty());
-			string_t sRev2 = pMan->get_document_version_async(sid).get();
+			string_t sRev2{};
+			bool bRet = pMan->get_document_version(sid,sRev2);
+			Assert::IsTrue(bRet);
 			Assert::AreEqual(srev, sRev2);
 			infomap oMap{ doc.get_map() };
 			oMap[U("ival")] = any{ (int)7890 };
-			couchdb_doc xdoc{ oMap };
-			update_response rsp1 = pMan->maintains_document_async(xdoc).get();
-			Assert::IsTrue(rsp1.ok());
-			update_response rsp2 = pMan->delete_document_async(doc).get();
-			b = rsp2.ok();
-			Assert::IsTrue(b);
-			sRev2 = pMan->get_document_version_async(sid).get();
-			Assert::IsTrue(sRev2.empty());
-			doc = pMan->get_document_by_id_async(sid).get();
-			Assert::IsTrue(doc.empty());
+			info_document xdoc{ any{oMap} };
+			update_response rsp1{};
+			bRet = pMan->maintains_document(xdoc,rsp1);
+			Assert::IsTrue(bRet);
+			update_response rsp2{};
+			bRet = pMan->delete_document(doc,rsp2);
+			Assert::IsTrue(bRet);
 			//
 		}//CouchDBManager_CreateDeleteDocument
-		TEST_METHOD(CouchDBManager_CreateIndex)
-		{
-			couchdb_manager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
-			string_t dbname = m_dbname;
-			bool b = pMan->exists_database_async(dbname).get();
-			if (!b) {
-				b = pMan->create_database_async(dbname).get();
-				Assert::IsTrue(b);
-			}
-			string_t field(U("ival"));
-			index_response rsp = pMan->create_index_async(field).get();
-			if (rsp.ok()) {
-				string_t sid = rsp.index_id();
-				Assert::IsFalse(sid.empty());
-				string_t srev = rsp.name();
-				Assert::IsFalse(srev.empty());
-				string_t srev2 = rsp.result();
-				Assert::IsFalse(srev2.empty());
-			}
-		}//CouchDBManager_CreateIndex
-		TEST_METHOD(CouchDBManager_EtudsIndex)
-		{
-			couchdb_manager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
-			string_t dbname = m_dbname;
-			bool b = pMan->exists_database_async(dbname).get();
-			if (!b) {
-				b = pMan->create_database_async(dbname).get();
-				Assert::IsTrue(b);
-			}
-			bool bRet = info_etudiant::check_indexes_async(*pMan).get();
-			Assert::IsTrue(bRet);
-		}//CouchDBManager_EtudsIndex
+		
 		TEST_METHOD(CouchDBManager_MaintainsDocs)
 		{
-			couchdb_manager *pMan = m_man.get();
+			couchdb_storemanager *pMan = m_man.get();
 			Assert::IsNotNull(pMan);
-			string_t dbname = m_dbname;
-			bool b = pMan->exists_database_async(dbname).get();
-			if (!b) {
-				b = pMan->create_database_async(dbname).get();
-				Assert::IsTrue(b);
-			}
 			string_t stype(U("testtype"));
 			string_t keysigle(U("sigle"));
 			query_filter filter{};
 			filter.add_equals(U("type"), any{ stype });
-			int nCount = pMan->find_documents_count_async(filter).get();
+			int nCount{ -1 };
+			bool bRet = pMan->find_documents_count(filter,nCount);
+			Assert::IsTrue(bRet);
 			Assert::IsTrue(nCount >= 0);
 			if (nCount < 1) {
-				const std::vector<couchdb_doc> &vec = st_m_docs;
+				const std::vector<info_document> &vec = st_m_docs;
 				int nc = static_cast<int>(vec.size());
 				Assert::IsTrue(nc > 0);
-				std::vector<update_response> rr = pMan->maintains_documents_async(vec).get();
-				nCount = pMan->find_documents_count_async(filter).get();
+				std::vector<update_response> rr{};
+				bRet = pMan->maintains_documents(vec,rr);
+				Assert::IsTrue(bRet);
+				bRet = pMan->find_documents_count(filter, nCount);
+				Assert::IsTrue(bRet);
 				Assert::AreEqual(nc, nCount);
 			}
-			std::vector<couchdb_doc> alldocs{};
+			std::vector<info_document> alldocs{};
 			int pagesize = 10;
 			int offset = 0;
 			filter.set_limit(pagesize);
 			while (offset < nCount) {
 				filter.set_skip(offset);
-				std::vector<couchdb_doc> docs = pMan->find_documents_async(filter).get();
+				std::vector<info_document> docs{};
+				bRet = pMan->find_documents(filter,docs);
+				Assert::IsTrue(bRet);
 				int nx = static_cast<int>(docs.size());
 				offset += nx;
 				for (auto p : docs) {
@@ -274,7 +241,7 @@ namespace UnitTestInfoData
 					os << p;
 					string_t s = os.str();
 					Logger::WriteMessage(s.c_str());
-					p.is_deleted(true);
+					p.set_deleted(true);
 					alldocs.push_back(p);
 				}// p
 				if (nx < pagesize) {
@@ -282,170 +249,64 @@ namespace UnitTestInfoData
 				}
 			}// offsert
 			int nt = static_cast<int>(alldocs.size());
-			std::vector<update_response> rr = pMan->maintains_documents_async(alldocs).get();
+			std::vector<update_response> rr{};
+			bRet = pMan->maintains_documents(alldocs,rr);
+			Assert::IsTrue(bRet);
 			int nx = static_cast<int>(rr.size());
 			Assert::AreEqual(nt, nx);
-			int nr = pMan->find_documents_count_async(filter).get();
+			int nr{ -1 };
+			bRet = pMan->find_documents_count(filter,nr);
+			Assert::IsTrue(bRet);
 			Assert::IsTrue(nr == 0);
 		}//CouchDBManager_MaintainsDocs
 		TEST_METHOD(CouchDBManager_Attachment)
 		{
-			couchdb_manager *pMan = m_man.get();
+			couchdb_storemanager *pMan = m_man.get();
 			Assert::IsNotNull(pMan);
-			string_t dbname = m_dbname;
-			bool b = pMan->exists_database_async(dbname).get();
-			if (!b) {
-				b = pMan->create_database_async(dbname).get();
-				Assert::IsTrue(b);
-			}
 			string_t sid(U("testid"));
-			couchdb_doc doc = pMan->get_document_by_id_async(sid).get();
-			if (doc.empty()) {
-				update_response r = pMan->maintains_document_async(m_doc).get();
-				Assert::IsTrue(r.ok());
-				doc = pMan->get_document_by_id_async(sid).get();
-				Assert::IsFalse(doc.empty());
+			info_document doc{};
+			if (!pMan->get_document_by_id(sid,doc)) {
+				update_response r{};
+				info_document x{ m_doc };
+				bool b = pMan->maintains_document(x,r);
+				Assert::IsTrue(b);
+				b = pMan->get_document_by_id(sid,doc);
+				Assert::IsTrue(b);
 			}
 			Assert::IsTrue(doc.is_persisted());
 			string_t filename(U("D:\\testdata\\test.jpg"));
 			blob_data blob{ filename };
-			b = blob.ok();
-			Assert::IsTrue(b);
-			string_t attname = blob.name();
-			update_response rsp = pMan->update_document_attachment_async(doc, blob).get();
+			blob.id(sid);
+			update_response rsp{};
+			bool bRet = pMan->update_attachment(blob,rsp);
+			Assert::IsTrue(bRet);
 			Assert::IsTrue(rsp.ok());
-			doc = pMan->get_document_by_id_async(sid).get();
-			std::vector<attachment_info> vec{};
-			size_t nu = doc.attachments(vec);
-			Assert::IsTrue(nu > 0);
+			bRet = pMan->get_document_by_id(sid, doc);
+			Assert::IsTrue(bRet);
+			const std::vector<blob_data> &vec = doc.blobs();
+			Assert::IsTrue(!vec.empty());
 			for (auto p : vec) {
+				string_t sname = p.name();
+				Assert::IsTrue(!sname.empty());
 				string_t xu = p.url();
 				Assert::IsTrue(!xu.empty());
-				string_t xc = p.content_type();
-				string_t s = p.toString();
-				Logger::WriteMessage(s.c_str());
+				string_t xc = p.mime_type();
+				Assert::IsTrue(!xc.empty());
+				blob_data blob{};
+				bRet = pMan->read_attachment(sid, sname, blob);
+				Assert::IsTrue(bRet);
+				update_response rr{};
+				bRet = pMan->delete_attachment(blob, rr);
+				Assert::IsTrue(bRet);
 			}//p
-			std::shared_ptr<blob_data> bb = pMan->read_document_attachment_async(doc, attname).get();
-			blob_data *pb = bb.get();
-			Assert::IsNotNull(pb);
-			bool bz = pb->ok();
-			Assert::IsTrue(pb->ok());
-			rsp = pMan->delete_document_attachment_async(doc, attname).get();
-			Assert::IsTrue(rsp.ok());
-			std::shared_ptr<blob_data> bb2 = pMan->read_document_attachment_async(doc, attname).get();
-			blob_data *pb2 = bb2.get();
-			Assert::IsFalse(pb2->ok());
+			bRet = pMan->get_document_by_id(sid, doc);
+			Assert::IsTrue(bRet);
+			const std::vector<blob_data> &vec2 = doc.blobs();
+			Assert::IsTrue(vec2.empty());
 		}// CouchDBManager_Attachment
-		TEST_METHOD(CouchDBManager_ImportEtuds)
-		{
-			string_t filename(U("D:\\testdata\\Etuds_S4.csv"));
-			etud_importer oImport{ filename };
-			bool b = oImport.import();
-			Assert::IsTrue(b);
-			std::vector<any> vv = oImport.get_items();
-			Assert::IsFalse(vv.empty());
-		}//CouchDBManager_CreateIndex
-		TEST_METHOD(CouchDBManager_QueryFilter)
-		{
-			query_filter filter{};
-			int nPageSize{ 10 };
-			filter.set_limit(nPageSize);
-			filter.add_sort(info_etudiant::KEY_FULLNAME);
-			filter.add_equals(info_etudiant::KEY_TYPE, any{ info_etudiant::TYPE_ETUD });
-			string_t ss = filter.toString();
-			Assert::IsFalse(ss.empty());
-			Logger::WriteMessage(ss.c_str());
-		}//CouchDBManager_QueryFilter
-		TEST_METHOD(CouchDBManager_SaveImportEtuds)
-		{
-			string_t filename(U("D:\\testdata\\Etuds_S4.csv"));
-			etud_importer oImport{ filename };
-			bool b = oImport.import();
-			Assert::IsTrue(b);
-			std::vector<any> vv = oImport.get_items();
-			Assert::IsFalse(vv.empty());
-			//
-			couchdb_manager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
-			string_t dbname = m_dbname;
-			b = pMan->exists_database_async(dbname).get();
-			if (!b) {
-				b = pMan->create_database_async(dbname).get();
-				Assert::IsTrue(b);
-			}
-			string_t field(info_etudiant::KEY_FULLNAME);
-			index_response rsp = pMan->create_index_async(field).get();
-			Assert::IsTrue(rsp.ok());
-			std::vector<info_etudiant> etuds{};
-			for (auto va : vv) {
-				info_etudiant oEtud{ va };
-				b = oEtud.load(*pMan).get();
-				if (!b) {
-					b = oEtud.save(*pMan).get();
-					Assert::IsTrue(b);
-				}
-				etuds.push_back(oEtud);
-			}// va
-			query_filter filter{};
-			int nPageSize{ 10 };
-			filter.set_limit(nPageSize);
-			filter.add_sort(info_etudiant::KEY_FULLNAME);
-		//	filter.add_projection_field(info_etudiant::KEY_FULLNAME);
-		//	filter.add_projection_field(info_etudiant::KEY_DOSSIER);
-		//	filter.add_projection_field(info_etudiant::KEY_VERSION);
-			int nTotal = info_etudiant::get_count_async(*pMan,filter).get();
-			int nOffset{ 0 };
-			while (nOffset < nTotal) {
-				filter.set_skip(nOffset);
-				std::vector<info_etudiant> xx = info_etudiant::get_async(*pMan, filter).get();
-				int nx = static_cast<int>(xx.size());
-				nOffset += nx;
-				for (auto x : xx) {
-					string_t s = x.toString();
-					Logger::WriteMessage(s.c_str());
-				}// x
-				if (nx < nPageSize) {
-					break;
-				}
-			}// nOffset
-		}//CouchDBManager_CreateIndex
-		TEST_METHOD(CouchDBManager_ReadEtuds)
-		{
-			couchdb_manager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
-			string_t dbname = m_dbname;
-			bool b = pMan->exists_database_async(dbname).get();
-			if (!b) {
-				b = pMan->create_database_async(dbname).get();
-				Assert::IsTrue(b);
-			}
-			query_filter filter{};
-			int nPageSize{ 10 };
-			filter.set_limit(nPageSize);
-			
-		    filter.add_projection_field(info_etudiant::KEY_FULLNAME);
-			filter.add_projection_field(info_etudiant::KEY_FIRSTNAME);
-			filter.add_projection_field(info_etudiant::KEY_LASTNAME);
-			//filter.add_sort(info_etudiant::KEY_LASTNAME);
-			filter.add_sort(info_etudiant::KEY_FIRSTNAME);
-			int nTotal = info_etudiant::get_count_async(*pMan, filter).get();
-			int nOffset{ 0 };
-			while (nOffset < nTotal) {
-				filter.set_skip(nOffset);
-				std::vector<info_etudiant> xx = info_etudiant::get_async(*pMan, filter).get();
-				int nx = static_cast<int>(xx.size());
-				nOffset += nx;
-				for (auto x : xx) {
-					string_t s = x.toString();
-					Logger::WriteMessage(s.c_str());
-				}// x
-				if (nx < nPageSize) {
-					break;
-				}
-			}// nOffset
-		}//CouchDBManager_ReadEtuds
+		
 	};
 	////////////////////////////
-	std::vector<couchdb_doc> CouchDBManagerTest::st_m_docs;
+	std::vector<info_document> CouchDBManagerTest::st_m_docs;
 	/////////////////////////
 }

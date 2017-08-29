@@ -1,8 +1,7 @@
 #include "query_filter.h"
-#include <stringutils.h>
+#include "stringutils.h"
 ///////////////////////////////
 namespace info {
-	namespace couchdb {
 		//////////////////////////////////////
 		static const string_t KEY_SELECTOR(U("selector"));
 		static const string_t KEY_LIMIT(U("limit"));
@@ -130,5 +129,4 @@ namespace info {
 			add_operation(field, U("$regex"), s);
 		}
 		//////////////////////////////////
-	}// namespace couchdb
 }// namespace info

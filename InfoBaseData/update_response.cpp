@@ -1,7 +1,6 @@
 #include "update_response.h"
 //////////////////////////////////
 namespace info {
-	namespace couchdb {
 		////////////////////////////////////
 		update_response::update_response()
 		{
@@ -56,5 +55,4 @@ namespace info {
 			return (bRet);
 		}
 		///////////////////////////
-	}// namespace couchdb
 }// namespace info

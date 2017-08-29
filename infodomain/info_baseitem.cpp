@@ -3,28 +3,29 @@
 //////////////////////////////
 namespace info {
 	namespace domain {
-		using namespace info::couchdb;
 		////////////////////////
 		info_baseitem::info_baseitem()
 		{
 		}
-		info_baseitem::info_baseitem(const any &v): type_doc(v) {
+		info_baseitem::info_baseitem(const any &v): info_document(v) {
 
 		}
-		info_baseitem::info_baseitem(const info_baseitem &other):type_doc(other) {
+		info_baseitem::info_baseitem(const info_baseitem &other): info_document(other) {
 
 		}
 		info_baseitem & info_baseitem::operator=(const info_baseitem &other) {
 			if (this != &other) {
-				type_doc::operator=(other);
+				info_document::operator=(other);
 			}
 			return (*this);
 		}
 		info_baseitem::~info_baseitem()
 		{
 		}
-		const std::set<info_fielddesc>  info_baseitem::get_descs(void) const {
-			return std::set<info_fielddesc>{};
+		void info_baseitem::get_descs(std::set<info_fielddesc> &oSet) const {
+			info_document::get_descs(oSet);
+			oSet.insert(info_fielddesc{ KEY_STATUS,U("Status"),U("STATUS"),info_datatype::status });
+			oSet.insert(info_fielddesc{ KEY_DESC,U("Observations"),U("OBSERVATIONS"),info_datatype::text });
 		}
 		info_status info_baseitem::status(void) const {
 			int n{ 0 };

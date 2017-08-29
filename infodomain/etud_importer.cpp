@@ -21,7 +21,7 @@ namespace info {
 		}
 		void etud_importer::check_descs(void) {
 			info_etudiant r{};
-			this->m_descs = r.get_descs();
+			r.get_descs(m_descs);
 		}
 		void etud_importer::register_item(const infomap & item) {
 			if (!item.empty()) {

@@ -2,10 +2,9 @@
 #ifndef UPDATE_RESPONSE_H__
 #define UPDATE_RESPONSE_H__
 /////////////////////////
-#include <infobaseobject.h>
+#include "infobaseobject.h"
 //////////////////////////////
 namespace info {
-	namespace couchdb {
 		/////////////////////////
 		class update_response : public infobaseobject
 		{
@@ -26,7 +25,6 @@ namespace info {
 			string_t reason(void) const;
 		};// class update_response
 		///////////////////////////
-	}// namespace couchdb
 }// namespace info
 /////////////////////////////
 #endif // UPDATE_RESPONSE_H__

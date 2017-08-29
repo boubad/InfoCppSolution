@@ -4,21 +4,12 @@
 //////////////////////////
 #include "domainstrings.h"
 ////////////////////////////
-#include <sigletype_doc.h>
-#include <query_filter.h>
-#include <info_fielddesc.h>
-#include <set>
+#include <info_document.h>
 //////////////////////////////
-namespace info {
-	namespace couchdb {
-		class couchdb_manager;
-	}// namespace couchdb
-}// namespace info;
-/////////////////////////////
 namespace info {
 	namespace domain {
 		/////////////////////////
-		class info_baseitem : public info::couchdb::type_doc, public domainstrings
+		class info_baseitem : public info_document, public domainstrings
 		{
 		protected:
 			info_baseitem();
@@ -32,7 +23,7 @@ namespace info {
 			void status(info_status s);
 			nullable_string observations(void) const;
 			void observations(const string_t &s);
-			virtual const std::set<info_fielddesc>  get_descs(void) const;
+			virtual void get_descs(std::set<info_fielddesc> &oSet) const override;
 		};
 		/////////////////////////
 	}// namespace domain

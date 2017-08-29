@@ -1,14 +1,12 @@
 #include "info_etudiant.h"
 /////////////////////////////
 #include <stringutils.h>
-#include <couchdb_manager.h>
+#include <datastore_manager.h>
 #include <algorithm>
 ////////////////////////
 namespace info {
 	namespace domain {
 		//////////////////////////////
-		using namespace info::couchdb;
-		///////////////////////////////
 		void info_etudiant::check_type(void) {
 			type(TYPE_ETUD);
 			check_fullname();
@@ -134,13 +132,12 @@ namespace info {
 				return (sRet);
 			}
 			string_t s = *s0;
-			std::vector<attachment_info> vv{};
-			attachments(vv);
-			auto it = std::find_if(vv.begin(), vv.end(), [s](const attachment_info &p)->bool {
+			const std::vector<blob_data> &vv = this->blobs();
+			auto it = std::find_if(vv.begin(), vv.end(), [s](const blob_data &p)->bool {
 				return (p.name() == s);
 			});
 			if (it != vv.end()) {
-				const attachment_info &att = *it;
+				const blob_data &att = *it;
 				sRet = att.url();
 			}
 			return (sRet);
@@ -1017,13 +1014,13 @@ namespace info {
 			set_string_property(KEY_REMS4, s);
 		}
 		///////////////////////////////////////////
-		std::future<bool> info_etudiant::set_avatar_blob(couchdb_manager &oMan, const blob_data &blob) {
-			couchdb_manager *pMan = &oMan;
+		std::future<bool> info_etudiant::set_avatar_blob(datastore_manager &oMan, const blob_data &blob) {
+			datastore_manager *pMan = &oMan;
 			std::shared_ptr<blob_data> pv = std::make_shared <blob_data>(blob);
 			return std::async([this, pMan, pv]()->bool {
-				bool bRet{ false };
-				update_response rsp = pMan->update_document_attachment_async(*this, *pv).get();
-				if (rsp.ok()) {
+				pv->id(this->id());
+				bool bRet = pMan->maintains_blob_async(*pv).get();
+				if (bRet) {
 					string_t sname = pv->name();
 					this->avatar(sname);
 					bRet = this->save(*pMan).get();
@@ -1031,8 +1028,8 @@ namespace info {
 				return (bRet);
 			});
 		}//set_avatar_blob
-		std::future<int> info_etudiant::get_count_async(couchdb_manager &oMan, const query_filter &filter ) {
-			couchdb_manager *pMan = &oMan;
+		std::future<int> info_etudiant::get_count_async(datastore_manager &oMan, const query_filter &filter ) {
+			datastore_manager *pMan = &oMan;
 			std::shared_ptr<query_filter> pf = std::make_shared < query_filter>(filter);
 			return std::async([pMan, pf]()->int {
 				query_filter f{ *pf };
@@ -1041,25 +1038,26 @@ namespace info {
 				return (nRet);
 			});
 		}//get_count_async
-		std::future<std::vector<info_etudiant> > info_etudiant::get_async(info::couchdb::couchdb_manager &oMan,
-			const info::couchdb::query_filter &filter) {
-			couchdb_manager *pMan = &oMan;
+		std::future<std::vector<info_etudiant> > info_etudiant::get_async(datastore_manager &oMan,const query_filter &filter) {
+			datastore_manager *pMan = &oMan;
 			std::shared_ptr<query_filter> pf = std::make_shared < query_filter>(filter);
 			return std::async([pMan, pf]()->std::vector<info_etudiant> {
 				std::vector<info_etudiant> oRet{};
 				query_filter f{ *pf };
 				f.add_equals(KEY_TYPE, any{ TYPE_ETUD });
-				std::vector<couchdb_doc> vv = pMan->find_documents_async(f).get();
+				std::vector<infomap> vv = pMan->query_documents_async(f).get();
 				for (auto p : vv) {
-					info_etudiant cur{ p.get() };
+					any va{ p };
+					info_etudiant cur{ va };
+					cur.check_blobs_urls(pMan->get_base_url());
 					oRet.push_back(cur);
 				}// p
 				return (oRet);
 			});
 		}//get_async
 		std::future<std::vector<bool>> info_etudiant::maintains_async(const std::vector<info_etudiant> &ovec,
-			info::couchdb::couchdb_manager &oMan) {
-			couchdb_manager *pMan = &oMan;
+			datastore_manager &oMan) {
+			datastore_manager *pMan = &oMan;
 			std::shared_ptr<std::vector<info_etudiant>> pv = std::make_shared<std::vector<info_etudiant>>(ovec);
 			return std::async([pMan, pv]()->std::vector<bool> {
 				std::vector<bool> oRet{};
@@ -1071,8 +1069,8 @@ namespace info {
 				return (oRet);
 			});
 		}//maintains_async
-		std::future<bool> info_etudiant::check_indexes_async(info::couchdb::couchdb_manager &oMan) {
-			couchdb_manager *pMan = &oMan;
+		std::future<bool> info_etudiant::check_indexes_async(datastore_manager &oMan) {
+			datastore_manager *pMan = &oMan;
 			return std::async([pMan]()->bool {
 				static const std::vector<string_t> fields{KEY_LASTNAME,KEY_FIRSTNAME,KEY_FULLNAME,
 				KEY_USERNAME,KEY_EMAIL,KEY_BIRTHDATE,KEY_APB,KEY_ANNEE,KEY_GROUPE,KEY_DOSSIER,
@@ -1086,8 +1084,8 @@ namespace info {
 				};
 				bool bRet{ true };
 				for (auto field : fields) {
-					index_response rsp = pMan->create_index_async(field).get();
-                    if (!rsp.ok()){
+					bool rsp = pMan->check_field_index_async(field).get();
+                    if (!rsp){
                         bRet = false;
                         break;
                     }
@@ -1096,8 +1094,8 @@ namespace info {
 			});
 		}//check_indexes_async
 		///////////////////////////////////////
-		const std::set<info_fielddesc> info_etudiant::get_descs(void) const {
-			std::set<info_fielddesc> oSet{};
+		void info_etudiant::get_descs(std::set<info_fielddesc> &oSet) const {
+			info_baseitem::get_descs(oSet);
 			oSet.insert(info_fielddesc{ KEY_APB,U("APB"),U("APB"),info_datatype::integer });
 			oSet.insert(info_fielddesc{ KEY_ANNEE,U("Année universitaire"),U("ANNEE"),info_datatype::integer });
 			oSet.insert(info_fielddesc{ KEY_GROUPE,U("Groupe"),U("GROUPE"),info_datatype::text });
@@ -1155,7 +1153,6 @@ namespace info {
 			oSet.insert(info_fielddesc{ KEY_REMS4,U("Remarques-S4"),U("REMS4"),info_datatype::text });
 			oSet.insert(info_fielddesc{ KEY_COMPS3S4,U("Comp-S3S4"),U("CPMPS3S4"),info_datatype::real });
 			//
-			return (oSet);
 		}//get_descs
 		////////////////////////////////////////
 	}// namespace domain

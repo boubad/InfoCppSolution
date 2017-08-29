@@ -46,7 +46,7 @@ namespace info {
 		void set_any_property(const string_t &key, const any &v);
 		bool empty(void) const;
 		any  get(void) const;
-		void set(const any &oMap);
+		virtual void set(const any &oMap);
 		bool obj_id(string_t &sid) const;
 		bool obj_etag(string_t &setag) const;
 		bool obj_version(string_t &sversion) const;

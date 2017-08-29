@@ -3,7 +3,6 @@
 #define STRINGUTILS_H__
 ////////////////////////
 #include "InfoDefs.h"
-#include <vector>
 ////////////////////////
 namespace info {
 	////////////////////////
