@@ -2,17 +2,14 @@
 ////////////////////
 #include <stringutils.h>
 #include <http_manager.h>
-#include <couchdb_manager.h>
+#include <couchdb_storemanager.h>
 #include <server_info.h>
 #include <update_response.h>
-#include <info_etudiant.h>
-#include <etud_importer.h>
 /////////////////////////
 namespace {
 using namespace info;
 using namespace info::http;
 using namespace info::couchdb;
-using namespace info::domain;
 ///////////////////////////
 class CouchDBManagerTest : public ::testing::Test {
 protected:
@@ -21,10 +18,10 @@ protected:
     string_t m_username;
     string_t m_password;
     std::shared_ptr<http_client> m_httpclient;
-    std::shared_ptr<couchdb_manager> m_man;
+    std::shared_ptr<couchdb_storemanager> m_man;
     any m_doc;
     //
-    static std::vector<couchdb_doc> st_m_docs;
+    static std::vector<info_document> st_m_docs;
 protected:
     CouchDBManagerTest() {}
     virtual ~CouchDBManagerTest() {}
@@ -109,7 +106,7 @@ protected:
         m_username.clear();
     }// TearDown
 }; // class CouchDBManagerTest
-std::vector<couchdb_doc> CouchDBManagerTest::st_m_docs;
+std::vector<info_document> CouchDBManagerTest::st_m_docs;
 /////////////////////////////
 TEST_F(CouchDBManagerTest,ServerInfo)
 {

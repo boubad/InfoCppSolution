@@ -1,1 +1,1 @@
-add_library(couchdb attachment_info.cpp couchdb_doc.cpp couchdb_manager.cpp index_response.cpp query_filter.cpp server_info.cpp update_response.cpp sigletype_doc.cpp)
+add_library(couchdb couchdb_storemanager.cpp index_response.cpp server_info.cpp)

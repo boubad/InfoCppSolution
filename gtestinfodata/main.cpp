@@ -1,16 +1,15 @@
 #include <gtest/gtest.h>
 ////////////////////////
-//#include "InfoEnv.h"
+#include "info_env.h"
 ////////////////////////
 int main(int argc, char **argv) {
 	int nRet{ 1 };
 	try {
-//		::testing::AddGlobalTestEnvironment(new UnitTestDataLib::InfoEnv{});
+		::testing::AddGlobalTestEnvironment(new InfoEnv{});
 		::testing::InitGoogleTest(&argc, argv);
 		nRet = RUN_ALL_TESTS();
 	}
 	catch (std::exception &ex) {
-//		info::string_t s = utility::conversions::to_string_t(ex.what());
 		std::cerr << std::endl << ex.what() << std::endl;
 	}
 #ifdef _WIN32

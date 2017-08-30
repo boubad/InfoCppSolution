@@ -1,1 +1,1 @@
-add_library(InfoBaseData base_importer.cpp blob_data.cpp http_client.cpp info_fielddesc.cpp info_response.cpp infobaseobject.cpp InfoDefs.cpp stringutils.cpp)
+add_library(InfoBaseData attachment_info.cpp base_importer.cpp blob_data.cpp  datastore_manager.cpp http_client.cpp info_document.cpp info_fielddesc.cpp info_response.cpp infobaseobject.cpp InfoDefs.cpp query_filter.cpp stringutils.cpp update_response.cpp)
