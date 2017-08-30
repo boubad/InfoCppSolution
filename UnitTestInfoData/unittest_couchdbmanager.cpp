@@ -2,12 +2,12 @@
 #include "CppUnitTest.h"
 ////////////////////////
 #include <stringutils.h>
-#include <http_manager.h>
-#include <couchdb_storemanager.h>
 #include <server_info.h>
 #include <update_response.h>
-#include <etud_importer.h>
-#include <info_etudiant.h>
+#include <info_document.h>
+#include <query_filter.h>
+////////////////////////////////
+#include "info_env.h"
 /////////////////////////////
 //
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -15,18 +15,13 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 namespace UnitTestInfoData
 {
 	using namespace info;
-	using namespace info::http;
 	using namespace info::couchdb;
-	using namespace info::domain;
+	using namespace info::test;
 	///////////////////////////
 	TEST_CLASS(CouchDBManagerTest)
 	{
 	protected:
-		serverurl m_serverurl;
-		databasename m_dbname;
-		string_t m_username;
-		string_t m_password;
-		std::shared_ptr<http_client> m_httpclient;
+		std::shared_ptr<http_client> m_client;
 		std::shared_ptr<couchdb_storemanager> m_man;
 		any m_doc;
 		//
@@ -37,7 +32,7 @@ namespace UnitTestInfoData
 			size_t n{ 50 };
 			std::vector<info_document> &vec = st_m_docs;
 			vec.clear();
-			string_t stype(U("testtype"));
+			string_t stype(InfoEnv::test_type());
 			for (size_t i = 0; i < n; ++i) {
 				int nRand = std::rand() % 150;
 				infomap oMap{};
@@ -70,16 +65,13 @@ namespace UnitTestInfoData
 	public:
 		TEST_METHOD_INITIALIZE(SetUp)
 		{
-			m_serverurl = serverurl{ U("http://localhost:5984") };
-			m_dbname = databasename{ U("xxtest") };
-			m_httpclient.reset(new http_manager{ m_serverurl,m_username,m_password });
-			http_client *pClient = m_httpclient.get();
-			Assert::IsNotNull(pClient);
-			m_man.reset(new couchdb_storemanager{ *pClient,m_dbname });
-			Assert::IsNotNull(m_man.get());
+			m_client = InfoEnv::get_http_client();
+			Assert::IsTrue(m_client.get() != nullptr);
+			m_man = InfoEnv::get_storemanager(*m_client);
+			Assert::IsTrue (m_man.get() != nullptr);
 			//
 			infomap oMap{};
-			string_t sid(U("testid"));
+			string_t sid(InfoEnv::test_id());
 			string_t textval(U("string testvalue"));
 			oMap[U("_id")] = any{ sid };
 			oMap[U("bval")] = any{ true };
@@ -101,16 +93,14 @@ namespace UnitTestInfoData
 		TEST_METHOD_CLEANUP(TearDown)
 		{
 			m_man.reset();
-			m_httpclient.reset();
-			m_password.clear();
-			m_username.clear();
+			m_client.reset();
 		}// TearDown
 	public:
 
 		TEST_METHOD(CouchDBManager_ServerInfo)
 		{
 			couchdb_storemanager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
+			Assert::IsTrue(pMan != nullptr);
 			server_info info{};
 			bool b = pMan->get_server_info(info);
 			Assert::IsTrue(b);
@@ -124,27 +114,27 @@ namespace UnitTestInfoData
 			string_t s3 = info.version();
 			Assert::IsFalse(s3.empty());
 			string_t s4 = info.vendor_name();
-			Assert::IsFalse(s4.empty());
+			Assert::IsTrue(!s4.empty());
 			string_t s5 = info.vendor_version();
 			if (s3 == U("2.1.0")) {
 				std::vector<string_t> vv{};
 				info.features(vv);
-				Assert::IsFalse(vv.empty());
+				Assert::IsTrue(!vv.empty());
 			}
 		}//CouchDBManager_ServerInfo
 		TEST_METHOD(CouchDBManager_GetAllDatabases)
 		{
 			couchdb_storemanager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
+			Assert::IsTrue(pMan != nullptr);
 			std::vector<string_t> vv{};
 			bool bRet = pMan->get_all_databases(vv);
 			Assert::IsTrue(bRet);
-			Assert::IsFalse(vv.empty());
+			Assert::IsTrue(!vv.empty());
 		}//CouchDBManager_GetAllDatabases
 		TEST_METHOD(CouchDBManager_GetUuids)
 		{
 			couchdb_storemanager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
+			Assert::IsTrue(pMan != nullptr);
 			size_t nCount = 10;
 			std::vector<string_t> vv{};
 			bool bRet = pMan->get_uuids(vv,(int)nCount);
@@ -155,7 +145,7 @@ namespace UnitTestInfoData
 		TEST_METHOD(CouchDBManager_CreateDeleteDatabase)
 		{
 			couchdb_storemanager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
+			Assert::IsTrue(pMan != nullptr);
 			string_t dbname(U("yytest"));
 			bool b = pMan->exists_database(dbname);
 			if (!b) {
@@ -165,13 +155,13 @@ namespace UnitTestInfoData
 			b = pMan->delete_database(dbname);
 			Assert::IsTrue(b);
 			b = pMan->exists_database(dbname);
-			Assert::IsFalse(b);
+			Assert::IsTrue(!b);
 		}//CouchDBManager_CreateDeleteDatabase
 		TEST_METHOD(CouchDBManager_CreateDeleteDocument)
 		{
 			couchdb_storemanager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
-			string_t sid(U("testid"));
+			Assert::IsTrue(pMan != nullptr);
+			string_t sid(InfoEnv::test_id());
 			info_document doc{};
 			if (!pMan->get_document_by_id(sid,doc)){
 				update_response r{};
@@ -185,7 +175,7 @@ namespace UnitTestInfoData
 			string_t sid2 = doc.id();
 			Assert::AreEqual(sid, sid2);
 			string_t srev = doc.version();
-			Assert::IsFalse(srev.empty());
+			Assert::IsTrue(!srev.empty());
 			string_t sRev2{};
 			bool bRet = pMan->get_document_version(sid,sRev2);
 			Assert::IsTrue(bRet);
@@ -205,8 +195,8 @@ namespace UnitTestInfoData
 		TEST_METHOD(CouchDBManager_MaintainsDocs)
 		{
 			couchdb_storemanager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
-			string_t stype(U("testtype"));
+			Assert::IsTrue(pMan != nullptr);
+			string_t stype(InfoEnv::test_type());
 			string_t keysigle(U("sigle"));
 			query_filter filter{};
 			filter.add_equals(U("type"), any{ stype });
@@ -262,8 +252,8 @@ namespace UnitTestInfoData
 		TEST_METHOD(CouchDBManager_Attachment)
 		{
 			couchdb_storemanager *pMan = m_man.get();
-			Assert::IsNotNull(pMan);
-			string_t sid(U("testid"));
+			Assert::IsTrue(pMan != nullptr);
+			string_t sid(InfoEnv::test_id());
 			info_document doc{};
 			if (!pMan->get_document_by_id(sid,doc)) {
 				update_response r{};
@@ -274,7 +264,7 @@ namespace UnitTestInfoData
 				Assert::IsTrue(b);
 			}
 			Assert::IsTrue(doc.is_persisted());
-			string_t filename(U("D:\\testdata\\test.jpg"));
+			string_t filename(InfoEnv::avatar_filename());
 			blob_data blob{ filename };
 			blob.id(sid);
 			update_response rsp{};
